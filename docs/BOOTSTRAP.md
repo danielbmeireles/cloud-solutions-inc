@@ -68,3 +68,7 @@ terraform {
 - **Bucket name already taken**: S3 bucket names are globally unique. Use `TF_STATE_BUCKET` to specify a different name.
 - **Permissions error**: Ensure your AWS credentials have the required IAM permissions listed above.
 - **Region mismatch**: Ensure `AWS_REGION` matches your desired region.
+
+---
+
+**Built with ❤️ for Cloud Solutions Inc.**
