@@ -1,0 +1,24 @@
+output "s3_bucket_name" {
+  description = "Name of the S3 bucket"
+  value       = aws_s3_bucket.main.id
+}
+
+output "s3_bucket_arn" {
+  description = "ARN of the S3 bucket"
+  value       = aws_s3_bucket.main.arn
+}
+
+output "efs_id" {
+  description = "ID of the EFS file system"
+  value       = aws_efs_file_system.main.id
+}
+
+output "efs_dns_name" {
+  description = "DNS name of the EFS file system"
+  value       = aws_efs_file_system.main.dns_name
+}
+
+output "efs_access_point_id" {
+  description = "ID of the EFS access point"
+  value       = aws_efs_access_point.main.id
+}
