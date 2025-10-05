@@ -1,0 +1,30 @@
+formatter: "markdown table"
+
+version: ">=0.20.0"
+
+output:
+  file: docs/TERRAFORM.md
+  mode: inject
+  template: |-
+      <!-- BEGIN_TF_DOCS -->
+      {{ .Content }}
+      <!-- END_TF_DOCS -->
+
+sort:
+  enabled: true
+  by: name
+
+settings:
+  anchor: true
+  color: true
+  default: true
+  description: true
+  escape: true
+  hide-empty: true
+  html: true
+  indent: 2
+  lockfile: true
+  read-comments: true
+  required: true
+  sensitive: true
+  type: true
