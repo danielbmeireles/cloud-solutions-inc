@@ -5,6 +5,7 @@ module "kms" {
   project_name            = var.project_name
   environment             = var.environment
   deletion_window_in_days = 10
+  node_group_arn          = module.eks.node_group_role_arn
 }
 
 # VPC Module

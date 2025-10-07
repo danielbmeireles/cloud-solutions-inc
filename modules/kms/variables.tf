@@ -17,3 +17,8 @@ variable "deletion_window_in_days" {
     error_message = "Deletion window must be between 7 and 30 days."
   }
 }
+
+variable "node_group_arn" {
+  description = "ARN of the EKS Node Group Role"
+  type        = string
+}

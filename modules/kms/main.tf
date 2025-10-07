@@ -48,16 +48,15 @@ resource "aws_kms_key" "eks" {
       },
       {
         Sid    = "Allow Node Group Role"
-        effect = "Allow"
-        principal = {
-          type        = "AWS"
-          identifiers = [aws_iam_role.node_group.arn]
+        Effect = "Allow"
+        Principal = {
+          AWS = var.node_group_arn
         }
-        action = [
+        Action = [
           "kms:Decrypt",
           "kms:DescribeKey"
         ]
-        resource = ["*"]
+        Resource = "*"
       }
     ]
   })
