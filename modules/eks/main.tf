@@ -98,10 +98,24 @@ resource "aws_security_group_rule" "cluster_egress" {
   cidr_blocks       = ["0.0.0.0/0"]
 }
 
+# IAM Instance Profile for Node Group
+resource "aws_iam_instance_profile" "node_group" {
+  name = "${var.project_name}-${var.environment}-node-group-profile"
+  role = aws_iam_role.node_group.name
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-node-group-profile"
+  }
+}
+
 # Launch Template for Node Group with encrypted EBS volumes
 resource "aws_launch_template" "node_group" {
   name_prefix = "${var.project_name}-${var.environment}-node-"
   description = "Launch template for EKS node group with encrypted EBS volumes"
+
+  iam_instance_profile {
+    name = aws_iam_instance_profile.node_group.name
+  }
 
   block_device_mappings {
     device_name = "/dev/xvda"
@@ -156,7 +170,7 @@ resource "aws_eks_node_group" "main" {
 
   launch_template {
     id      = aws_launch_template.node_group.id
-    version = "$Latest"
+    version = tostring(aws_launch_template.node_group.latest_version)
   }
 
   instance_types = var.node_instance_types
