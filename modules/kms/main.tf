@@ -45,6 +45,19 @@ resource "aws_kms_key" "eks" {
             "kms:GrantIsForAWSResource" = "true"
           }
         }
+      },
+      {
+        Sid    = "Allow Node Group Role"
+        effect = "Allow"
+        principal = {
+          type        = "AWS"
+          identifiers = [aws_iam_role.node_group.arn]
+        }
+        action = [
+          "kms:Decrypt",
+          "kms:DescribeKey"
+        ]
+        resource = ["*"]
       }
     ]
   })
