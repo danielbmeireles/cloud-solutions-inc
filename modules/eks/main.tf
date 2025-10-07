@@ -113,10 +113,6 @@ resource "aws_launch_template" "node_group" {
   name_prefix = "${var.project_name}-${var.environment}-node-"
   description = "Launch template for EKS node group with encrypted EBS volumes"
 
-  iam_instance_profile {
-    name = aws_iam_instance_profile.node_group.name
-  }
-
   block_device_mappings {
     device_name = "/dev/xvda"
 
