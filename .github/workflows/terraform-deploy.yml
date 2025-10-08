@@ -11,8 +11,8 @@ on:
       - 'environments/**'
     tags:
       - 'dev-*'
-      - 'staging-*'
-      - 'prod-*'
+      - 'stg-*'
+      - 'prd-*'
   pull_request:
     branches:
       - main
@@ -53,7 +53,7 @@ jobs:
             exit 0
           fi
 
-          # Priority 2: PR labels (deploy:dev, deploy:staging, deploy:production)
+          # Priority 2: PR labels (deploy:development, deploy:staging, deploy:production)
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
             if echo "$LABELS" | grep -q "deploy:production"; then
@@ -68,12 +68,12 @@ jobs:
             exit 0
           fi
 
-          # Priority 3: Git tags (dev-*, staging-*, prod-*)
+          # Priority 3: Git tags (dev-*, stg-*, prd-*)
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             TAG="${GITHUB_REF#refs/tags/}"
-            if [[ "$TAG" == prod-* ]]; then
+            if [[ "$TAG" == prd-* ]]; then
               echo "environment=production" >> $GITHUB_OUTPUT
-            elif [[ "$TAG" == staging-* ]]; then
+            elif [[ "$TAG" == stg-* ]]; then
               echo "environment=staging" >> $GITHUB_OUTPUT
             elif [[ "$TAG" == dev-* ]]; then
               echo "environment=development" >> $GITHUB_OUTPUT
@@ -144,9 +144,7 @@ jobs:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
         run: |
           terraform init \
-            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
-            -backend-config="key=${ENVIRONMENT}/terraform.tfstate" \
-            -backend-config="region=${{ vars.AWS_REGION }}"
+            -backend-config="environments/${ENVIRONMENT}/tfbackend.hcl"
 
       - name: Terraform Plan
         id: plan
@@ -215,9 +213,7 @@ jobs:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
         run: |
           terraform init \
-            -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
-            -backend-config="key=${ENVIRONMENT}/terraform.tfstate" \
-            -backend-config="region=${{ vars.AWS_REGION }}"
+            -backend-config="environments/${ENVIRONMENT}/tfbackend.hcl"
 
       - name: Terraform Plan
         env:
