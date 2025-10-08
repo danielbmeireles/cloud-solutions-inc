@@ -24,6 +24,8 @@ jobs:
   terraform-validate:
     name: Terraform Validate
     runs-on: ubuntu-latest
+    outputs:
+      fmt_outcome: ${{ steps.fmt.outcome }}
 
     steps:
       - name: Checkout code
@@ -35,6 +37,7 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       - name: Terraform Format Check
+        id: fmt
         run: terraform fmt -check -recursive
 
       - name: Terraform Init
@@ -85,7 +88,7 @@ jobs:
       - name: Comment PR
         if: github.event_name == 'pull_request'
         env:
-          FMT_OUTCOME: ${{ steps.fmt.outcome }}
+          FMT_OUTCOME: ${{ needs.terraform-validate.outputs.fmt_outcome }}
           INIT_OUTCOME: ${{ steps.init.outcome }}
           PLAN_OUTCOME: ${{ steps.plan.outcome }}
           PLAN: ${{ steps.plan.outputs.stdout }}
