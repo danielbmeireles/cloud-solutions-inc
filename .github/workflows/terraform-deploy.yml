@@ -190,7 +190,7 @@ jobs:
 
     environment:
       name: ${{ needs.determine-environment.outputs.environment }}
-      url: ${{ steps.terraform-output.outputs.alb_dns }}
+      url: ${{ steps.terraform-output.outputs.eks_endpoint }}
 
     steps:
       - name: Checkout code
@@ -232,17 +232,17 @@ jobs:
       - name: Terraform Output
         id: terraform-output
         run: |
-          echo "alb_dns=$(terraform output -raw alb_dns_name)" >> $GITHUB_OUTPUT
-          echo "ecs_cluster=$(terraform output -raw ecs_cluster_name)" >> $GITHUB_OUTPUT
-          echo "ecs_service=$(terraform output -raw ecs_service_name)" >> $GITHUB_OUTPUT
+          echo "eks_endpoint=$(terraform output -raw eks_cluster_endpoint)" >> $GITHUB_OUTPUT
+          echo "eks_cluster=$(terraform output -raw eks_cluster_name)" >> $GITHUB_OUTPUT
+          echo "vpc_id=$(terraform output -raw vpc_id)" >> $GITHUB_OUTPUT
 
       - name: Summary
         run: |
           echo "## Deployment Complete! 🚀" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Infrastructure Details" >> $GITHUB_STEP_SUMMARY
-          echo "- **ALB DNS**: ${{ steps.terraform-output.outputs.alb_dns }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **ECS Cluster**: ${{ steps.terraform-output.outputs.ecs_cluster }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **ECS Service**: ${{ steps.terraform-output.outputs.ecs_service }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **EKS Cluster**: ${{ steps.terraform-output.outputs.eks_cluster }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **EKS Endpoint**: ${{ steps.terraform-output.outputs.eks_endpoint }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **VPC ID**: ${{ steps.terraform-output.outputs.vpc_id }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Access your application at: http://${{ steps.terraform-output.outputs.alb_dns }}" >> $GITHUB_STEP_SUMMARY
+          echo "Configure kubectl with: \`aws eks update-kubeconfig --region \$AWS_REGION --name ${{ steps.terraform-output.outputs.eks_cluster }}\`" >> $GITHUB_STEP_SUMMARY
