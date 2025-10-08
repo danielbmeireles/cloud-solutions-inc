@@ -8,6 +8,11 @@ on:
       - '*.tf'
       - 'modules/**'
       - '.github/workflows/terraform-deploy.yml'
+      - 'environments/**'
+    tags:
+      - 'dev-*'
+      - 'staging-*'
+      - 'prod-*'
   pull_request:
     branches:
       - main
@@ -15,15 +20,76 @@ on:
       - '*.tf'
       - 'modules/**'
       - '.github/workflows/terraform-deploy.yml'
+      - 'environments/**'
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+        default: development
 
 env:
   TF_VERSION: 1.13.3
 
 jobs:
+  determine-environment:
+    name: Determine Environment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+
+    steps:
+      - name: Determine environment
+        id: set-env
+        run: |
+          # Priority 1: Manual workflow dispatch
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Priority 2: PR labels (deploy:dev, deploy:staging, deploy:production)
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+            if echo "$LABELS" | grep -q "deploy:production"; then
+              echo "environment=production" >> $GITHUB_OUTPUT
+            elif echo "$LABELS" | grep -q "deploy:staging"; then
+              echo "environment=staging" >> $GITHUB_OUTPUT
+            elif echo "$LABELS" | grep -q "deploy:development"; then
+              echo "environment=development" >> $GITHUB_OUTPUT
+            else
+              echo "environment=development" >> $GITHUB_OUTPUT
+            fi
+            exit 0
+          fi
+
+          # Priority 3: Git tags (dev-*, staging-*, prod-*)
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+            if [[ "$TAG" == prod-* ]]; then
+              echo "environment=production" >> $GITHUB_OUTPUT
+            elif [[ "$TAG" == staging-* ]]; then
+              echo "environment=staging" >> $GITHUB_OUTPUT
+            elif [[ "$TAG" == dev-* ]]; then
+              echo "environment=development" >> $GITHUB_OUTPUT
+            else
+              echo "environment=production" >> $GITHUB_OUTPUT
+            fi
+            exit 0
+          fi
+
+          # Default: production for main branch pushes
+          echo "environment=production" >> $GITHUB_OUTPUT
+
   terraform-validate:
     name: Terraform Validate
     runs-on: ubuntu-latest
+    needs: determine-environment
     outputs:
       fmt_outcome: ${{ steps.fmt.outcome }}
 
@@ -47,9 +113,9 @@ jobs:
         run: terraform validate
 
   terraform-plan:
-    name: Terraform Plan
+    name: Terraform Plan (${{ needs.determine-environment.outputs.environment }})
     runs-on: ubuntu-latest
-    needs: terraform-validate
+    needs: [determine-environment, terraform-validate]
     if: github.event_name == 'pull_request'
 
     permissions:
@@ -74,15 +140,25 @@ jobs:
 
       - name: Terraform Init
         id: init
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
         run: |
           terraform init \
             -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
-            -backend-config="key=production/terraform.tfstate" \
+            -backend-config="key=${ENVIRONMENT}/terraform.tfstate" \
             -backend-config="region=${{ vars.AWS_REGION }}"
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -input=false
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+        run: |
+          if [ -f "environments/${ENVIRONMENT}/terraform.tfvars" ]; then
+            terraform plan -var-file="environments/${ENVIRONMENT}/terraform.tfvars" -no-color -input=false
+          else
+            echo "::warning::No tfvars file found for ${ENVIRONMENT}, running without tfvars"
+            terraform plan -no-color -input=false
+          fi
         continue-on-error: true
 
       - name: Comment PR
@@ -103,17 +179,19 @@ jobs:
         run: exit 1
 
   terraform-apply:
-    name: Terraform Apply
+    name: Terraform Apply (${{ needs.determine-environment.outputs.environment }})
     runs-on: ubuntu-latest
-    needs: terraform-validate
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: [determine-environment, terraform-validate]
+    if: |
+      (github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')) ||
+      startsWith(github.ref, 'refs/tags/')
 
     permissions:
       contents: read
       id-token: write
 
     environment:
-      name: production
+      name: ${{ needs.determine-environment.outputs.environment }}
       url: ${{ steps.terraform-output.outputs.alb_dns }}
 
     steps:
@@ -133,14 +211,24 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Terraform Init
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
         run: |
           terraform init \
             -backend-config="bucket=${{ vars.TF_STATE_BUCKET }}" \
-            -backend-config="key=production/terraform.tfstate" \
+            -backend-config="key=${ENVIRONMENT}/terraform.tfstate" \
             -backend-config="region=${{ vars.AWS_REGION }}"
 
       - name: Terraform Plan
-        run: terraform plan -input=false -out=tfplan
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+        run: |
+          if [ -f "environments/${ENVIRONMENT}/terraform.tfvars" ]; then
+            terraform plan -var-file="environments/${ENVIRONMENT}/terraform.tfvars" -input=false -out=tfplan
+          else
+            echo "::warning::No tfvars file found for ${ENVIRONMENT}, running without tfvars"
+            terraform plan -input=false -out=tfplan
+          fi
 
       - name: Terraform Apply
         run: terraform apply -auto-approve -input=false tfplan
