@@ -1,0 +1,49 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+        name: Check YAML
+      - id: check-json
+        name: Check JSON
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+      - id: check-added-large-files
+        name: Check for large files
+        args: [--maxkb=1024]
+      - id: detect-private-key
+        name: Detect private keys
+      - id: end-of-file-fixer
+        name: End of File Fixer
+        exclude: "README.md"
+      - id: trailing-whitespace
+        name: Trim Trailing Whitespace
+        args: [--markdown-linebreak-ext=md]
+
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.101.0
+    hooks:
+      - id: terraform_fmt
+        name: Terraform Format
+      - id: terraform_validate
+        name: Terraform Validate
+      - id: terraform_tflint
+        name: Terraform Lint
+        args: [--args=--config=__GIT_WORKING_DIR__/.tflint.hcl]
+      - id: terraform_tfsec
+        name: Terraform Security Scan
+        args: [--args=--concise-output, --args=--exclude-downloaded-modules]
+
+  - repo: https://github.com/terraform-docs/terraform-docs
+    rev: v0.20.0
+    hooks:
+      - id: terraform-docs-go
+        name: Terraform Documentation
+        args: [markdown, ., --output-mode, replace, --output-file, README.md]
+
+  - repo: https://github.com/bridgecrewio/checkov.git
+    rev: 3.2.473
+    hooks:
+      - id: checkov
+        name: Static Code Analysis
+        args: [--quiet, --compact, --directory, .]
