@@ -13,6 +13,70 @@ The GitHub Actions workflow provides:
 
 Located at `.github/workflows/terraform-deploy.yml`
 
+## 🌍 Environment-Based Deployments
+
+The pipeline supports deploying to multiple environments (development, staging, production) using environment-specific configurations from the `environments/` folder.
+
+### Deployment Triggers
+
+#### 1️⃣ Manual Deployment (via GitHub UI)
+
+Go to **Actions** → **Terraform Deploy** → **Run workflow**
+
+Select the target environment from the dropdown:
+- `development`
+- `staging`
+- `production`
+
+#### 2️⃣ Automatic Deployment via PR Labels
+
+Add one of these labels to your pull request:
+- `deploy:development` → Deploys to development
+- `deploy:staging` → Deploys to staging
+- `deploy:production` → Deploys to production
+
+If no label is present, defaults to `development`.
+
+**Via GitHub UI:**
+1. Open your PR
+2. Click the gear icon next to "Labels"
+3. Create/select the appropriate label
+
+**Via GitHub CLI:**
+```bash
+gh pr edit <PR-NUMBER> --add-label "deploy:production"
+```
+
+**Note:** PRs only run `terraform plan` - they won't apply changes. To apply:
+- Merge to `main` (deploys to production by default)
+- Use manual workflow dispatch
+- Push a deployment tag
+
+#### 3️⃣ Automatic Deployment via Git Tags
+
+Push tags matching these patterns:
+- `dev-*` → Deploys to development
+- `staging-*` → Deploys to staging
+- `prod-*` → Deploys to production
+
+**Example:**
+```bash
+git tag prod-v1.0.0
+git push origin prod-v1.0.0
+```
+
+#### 4️⃣ Push to Main Branch
+
+Pushing to `main` automatically deploys to **production** by default.
+
+### Environment Configuration
+
+Each environment uses:
+- **tfvars file**: `environments/{environment}/terraform.tfvars`
+- **Terraform state**: `{environment}/terraform.tfstate` in your S3 bucket
+
+Create environment-specific tfvars by copying from `environments/production/terraform.tfvars` and adjusting values like instance types, scaling, regions, etc.
+
 ## 🔐 AWS Authentication Setup
 
 The pipeline uses OIDC (OpenID Connect) for secure authentication with AWS, eliminating the need for long-lived credentials.
