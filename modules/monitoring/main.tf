@@ -34,23 +34,35 @@ resource "aws_cloudwatch_dashboard" "main" {
         type = "metric"
         properties = {
           metrics = [
-            ["AWS/EKS", "cluster_failed_node_count", { "ClusterName" = var.eks_cluster_name, stat = "Average", label = "Failed Nodes" }],
-            [".", "cluster_node_count", { "ClusterName" = var.eks_cluster_name, stat = "Average", label = "Total Nodes" }]
+            ["AWS/EKS", "cluster_failed_node_count", "ClusterName", var.eks_cluster_name, { stat = "Average", label = "Failed Nodes" }],
+            [".", "cluster_node_count", ".", ".", { stat = "Average", label = "Total Nodes" }]
           ]
           period = 300
           region = data.aws_region.current.name
           title  = "EKS Cluster Metrics"
+          stat   = "Average"
+          yAxis = {
+            left = {
+              min = 0
+            }
+          }
         }
       },
       {
         type = "metric"
         properties = {
           metrics = [
-            ["AWS/Logs", "IncomingLogEvents", { "LogGroupName" = aws_cloudwatch_log_group.main.name, stat = "Sum", label = "Log Events" }]
+            ["AWS/Logs", "IncomingLogEvents", "LogGroupName", aws_cloudwatch_log_group.main.name, { stat = "Sum", label = "Log Events" }]
           ]
           period = 300
           region = data.aws_region.current.name
           title  = "Application Logs"
+          stat   = "Sum"
+          yAxis = {
+            left = {
+              min = 0
+            }
+          }
         }
       }
     ]
