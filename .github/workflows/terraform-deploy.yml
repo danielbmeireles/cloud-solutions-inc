@@ -108,6 +108,10 @@ jobs:
     needs: terraform-validate
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
 
+    permissions:
+      contents: read
+      id-token: write
+
     environment:
       name: production
       url: ${{ steps.terraform-output.outputs.alb_dns }}
