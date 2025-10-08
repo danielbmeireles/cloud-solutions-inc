@@ -1,4 +1,4 @@
-# CI/CD Pipeline
+# 🚀 CI/CD Pipeline
 
 CI/CD is implemented using GitHub Actions for automated testing and deployment.
 
@@ -9,17 +9,17 @@ The GitHub Actions workflow provides:
 3. **Deployment**: Automatic apply on merge to main branch
 4. **Outputs**: Deployment summary with cluster details
 
-## Workflow File
+## 📄 Workflow File
 
 Located at `.github/workflows/terraform-deploy.yml`
 
-## AWS Authentication Setup
+## 🔐 AWS Authentication Setup
 
 The pipeline uses OIDC (OpenID Connect) for secure authentication with AWS, eliminating the need for long-lived credentials.
 
-### Setting Up OIDC Connection Between GitHub and AWS
+### 🔗 Setting Up OIDC Connection Between GitHub and AWS
 
-#### 1. Create the OIDC Identity Provider in AWS
+#### 1️⃣ Create the OIDC Identity Provider in AWS
 
 ```bash
 aws iam create-open-id-connect-provider \
@@ -28,7 +28,7 @@ aws iam create-open-id-connect-provider \
   --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1
 ```
 
-#### 2. Create IAM Role for GitHub Actions
+#### 2️⃣ Create IAM Role for GitHub Actions
 
 Create a trust policy file `github-trust-policy.json`:
 
@@ -63,7 +63,7 @@ aws iam create-role \
   --assume-role-policy-document file://github-trust-policy.json
 ```
 
-#### 3. Attach Required Permissions
+#### 3️⃣ Attach Required Permissions
 
 Attach the necessary policies for Terraform operations:
 
@@ -76,7 +76,7 @@ aws iam attach-role-policy \
 # For production, create a custom policy with minimal required permissions
 ```
 
-#### 4. Configure GitHub Repository
+#### 4️⃣ Configure GitHub Repository
 
 Add the following as GitHub repository variables/secrets:
 
@@ -87,11 +87,11 @@ Add the following as GitHub repository variables/secrets:
 **Secrets**:
 - `AWS_ROLE_ARN`: The ARN of the IAM role created above (e.g., `arn:aws:iam::123456789012:role/GitHubActionsRole`)
 
-#### 5. Verify the Configuration
+#### 5️⃣ Verify the Configuration
 
 The workflow uses the `aws-actions/configure-aws-credentials@v4` action which automatically handles OIDC authentication. When a workflow runs, GitHub generates a short-lived OIDC token that AWS exchanges for temporary credentials.
 
-### Benefits of OIDC Authentication
+### ✨ Benefits of OIDC Authentication
 
 - ✅ No long-lived credentials stored in GitHub
 - ✅ Automatic credential rotation

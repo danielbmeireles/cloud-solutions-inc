@@ -1,8 +1,8 @@
-# EKS Configuration Guide <!-- omit in toc -->
+# ☸️ EKS Configuration Guide <!-- omit in toc -->
 
 This document cover the most important aspects related to Amazon EKS configuration, deployment, and management.
 
-## Table of Contents <!-- omit in toc -->
+## 📑 Table of Contents <!-- omit in toc -->
 
 - [Configuration Options](#configuration-options)
 - [Accessing the EKS Cluster](#accessing-the-eks-cluster)
@@ -12,9 +12,9 @@ This document cover the most important aspects related to Amazon EKS configurati
 - [Troubleshooting](#troubleshooting)
 - [Best Practices](#best-practices)
 
-## Configuration Options
+## ⚙️ Configuration Options
 
-### EKS Cluster Configuration
+### 🎛️ EKS Cluster Configuration
 
 ```hcl
 kubernetes_version = "1.31"  # Supported: 1.28, 1.29, 1.30, 1.31
@@ -26,7 +26,7 @@ cluster_endpoint_public_access_cidrs = ["YOUR_IP/32"]
 cluster_enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 ```
 
-### Node Group Configuration
+### 🖥️ Node Group Configuration
 
 ```hcl
 # Instance types (can specify multiple for mixed instances)
@@ -44,23 +44,23 @@ min_size     = 1  # Minimum nodes
 max_size     = 4  # Maximum nodes
 ```
 
-### Cost Optimization with Spot Instances
+### 💰 Cost Optimization with Spot Instances
 
 ```hcl
 capacity_type       = "SPOT"
 node_instance_types = ["t3.medium", "t3a.medium", "t2.medium"]  # Multiple types for better availability
 ```
 
-### Region and AZ Configuration
+### 🌍 Region and AZ Configuration
 
 ```hcl
 aws_region         = "eu-west-1"
 availability_zones = ["eu-west-1a", "eu-west-1b", "eu-west-1c"]
 ```
 
-## Accessing the EKS Cluster
+## 🔌 Accessing the EKS Cluster
 
-### Configure kubectl
+### 🔧 Configure kubectl
 
 ```bash
 # Using AWS CLI
@@ -70,7 +70,7 @@ aws eks update-kubeconfig --region eu-west-1 --name cloud-solutions-production-c
 terraform output -raw configure_kubectl | bash
 ```
 
-### Verify Access
+### ✅ Verify Access
 
 ```bash
 kubectl cluster-info
@@ -78,7 +78,7 @@ kubectl get nodes
 kubectl get all --all-namespaces
 ```
 
-### Sensitive Outputs
+### 🔐 Sensitive Outputs
 
 ```bash
 # View all outputs including sensitive ones
@@ -90,7 +90,7 @@ terraform output -raw eks_oidc_provider_arn
 terraform output -raw kubeconfig
 ```
 
-### Using IRSA (IAM Roles for Service Accounts)
+### 🔑 Using IRSA (IAM Roles for Service Accounts)
 
 Pre-configured IAM roles are available for:
 
@@ -115,11 +115,11 @@ metadata:
     eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/ROLE_NAME
 ```
 
-## Exposing Applications with Load Balancers
+## 🌐 Exposing Applications with Load Balancers
 
 EKS applications can be exposed to the internet using the AWS Load Balancer Controller, which automatically creates and manages AWS Application Load Balancers (ALB) or Network Load Balancers (NLB).
 
-### Install AWS Load Balancer Controller
+### 📦 Install AWS Load Balancer Controller
 
 The Terraform configuration has already created the necessary IAM role. Now install the controller:
 
@@ -158,7 +158,7 @@ helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
 kubectl get deployment -n kube-system aws-load-balancer-controller
 ```
 
-### Deploy Sample Application with ALB
+### 🚀 Deploy Sample Application with ALB
 
 ```bash
 # Deploy sample nginx app with Ingress
@@ -171,7 +171,7 @@ kubectl get ingress -n sample-app nginx-ingress -w
 kubectl get ingress -n sample-app nginx-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
 ```
 
-### Access Your Application
+### 🔗 Access Your Application
 
 Once the Ingress shows an ADDRESS, you can access your application:
 
@@ -184,9 +184,9 @@ echo "Application URL: http://${ALB_URL}"
 curl http://${ALB_URL}
 ```
 
-### Exposing Your Own Applications
+### 📡 Exposing Your Own Applications
 
-#### Option 1: Using Ingress (Recommended for HTTP/HTTPS)
+#### 🔀 Option 1: Using Ingress (Recommended for HTTP/HTTPS)
 
 ```yaml
 apiVersion: networking.k8s.io/v1
@@ -213,7 +213,7 @@ spec:
               number: 80
 ```
 
-#### Option 2: Using LoadBalancer Service (Creates NLB)
+#### ⚖️ Option 2: Using LoadBalancer Service (Creates NLB)
 
 ```yaml
 apiVersion: v1
@@ -233,7 +233,7 @@ spec:
       targetPort: 8080
 ```
 
-### HTTPS/SSL Configuration
+### 🔒 HTTPS/SSL Configuration
 
 To enable HTTPS, you need an ACM certificate:
 
@@ -253,9 +253,9 @@ To enable HTTPS, you need an ACM certificate:
      alb.ingress.kubernetes.io/ssl-redirect: '443'  # Redirect HTTP to HTTPS
    ```
 
-## Monitoring and Operations
+## 📊 Monitoring and Operations
 
-### CloudWatch Dashboard
+### 📈 CloudWatch Dashboard
 
 Access the dashboard via AWS Console or CLI:
 
@@ -263,7 +263,7 @@ Access the dashboard via AWS Console or CLI:
 aws cloudwatch get-dashboard --dashboard-name cloud-solutions-production-dashboard
 ```
 
-### View Logs
+### 📝 View Logs
 
 ```bash
 # EKS control plane logs
@@ -273,7 +273,7 @@ aws logs tail /aws/eks/cloud-solutions-production/cluster --follow
 aws logs tail /aws/eks/cloud-solutions-production-cluster/kube-apiserver --follow
 ```
 
-### Scaling Nodes Manually
+### 📏 Scaling Nodes Manually
 
 ```bash
 # Scale the node group
@@ -283,7 +283,7 @@ aws eks update-nodegroup-config \
   --scaling-config desiredSize=3
 ```
 
-### Cluster Autoscaler
+### 🔄 Cluster Autoscaler
 
 To enable automatic pod-based scaling, install the Cluster Autoscaler:
 
@@ -291,7 +291,7 @@ To enable automatic pod-based scaling, install the Cluster Autoscaler:
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
 ```
 
-### Deploy Sample Application (Optional)
+### 🧪 Deploy Sample Application (Optional)
 
 ```bash
 # Create a simple nginx deployment
@@ -300,7 +300,7 @@ kubectl expose deployment nginx --port=80 --type=LoadBalancer
 kubectl get services
 ```
 
-## Cleanup
+## 🧹 Cleanup
 
 To destroy all Kubernetes resources:
 
@@ -314,11 +314,11 @@ kubectl api-resources --verbs=list --namespaced -o name | \
   xargs -n 1 kubectl delete --all -n <namespace>
 ```
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
-### Common Issues
+### ⚠️ Common Issues
 
-#### Unable to connect to cluster
+#### 🚫 Unable to connect to cluster
 
 ```bash
 # Check AWS credentials
@@ -331,7 +331,7 @@ aws eks update-kubeconfig --region <region> --name <cluster-name>
 kubectl config current-context
 ```
 
-#### Nodes not joining cluster
+#### 🖥️ Nodes not joining cluster
 
 ```bash
 # Check node group status
@@ -343,7 +343,7 @@ aws eks describe-nodegroup \
 aws logs tail /aws/eks/<cluster-name>/cluster --follow
 ```
 
-#### Pods not scheduling
+#### 📦 Pods not scheduling
 
 ```bash
 # Check node resources
@@ -356,7 +356,7 @@ kubectl describe pod <pod-name>
 kubectl logs -n kube-system deployment/cluster-autoscaler
 ```
 
-#### ALB not creating
+#### 🌐 ALB not creating
 
 ```bash
 # Check Load Balancer Controller logs
@@ -369,9 +369,9 @@ kubectl describe ingress <ingress-name>
 aws iam get-role --role-name <load-balancer-controller-role>
 ```
 
-## Best Practices
+## ✨ Best Practices
 
-### Resource Quotas
+### 📊 Resource Quotas
 
 Set resource quotas for namespaces:
 
@@ -388,7 +388,7 @@ spec:
     limits.memory: 40Gi
 ```
 
-### Pod Security
+### 🛡️ Pod Security
 
 Use Pod Security Standards:
 
@@ -403,7 +403,7 @@ metadata:
     pod-security.kubernetes.io/warn: restricted
 ```
 
-### Network Policies
+### 🌐 Network Policies
 
 Implement network policies to control pod-to-pod traffic:
 
@@ -419,7 +419,7 @@ spec:
   - Egress
 ```
 
-### Resource Requests and Limits
+### 🎯 Resource Requests and Limits
 
 Always set resource requests and limits:
 

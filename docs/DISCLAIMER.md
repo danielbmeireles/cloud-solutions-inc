@@ -1,10 +1,10 @@
-# Disclaimer
+# ⚠️ Disclaimer
 
-## Architecture Attribution
+## 📐 Architecture Attribution
 
 The architecture implemented in this project is based on the AWS reference architecture diagram "Expose Microservices in a Hybrid Scenario Using Amazon EKS," available at https://aws.amazon.com/architecture/reference-architecture-diagrams/. The original design has been adapted and modified to meet the specific requirements of this implementation.
 
-## AI-Assisted Development
+## 🤖 AI-Assisted Development
 
 This project was developed with significant assistance from AI tools:
 
@@ -13,7 +13,7 @@ This project was developed with significant assistance from AI tools:
 - **Commit Messages**: Commit messages were crafted with the help of ChatGPT
 - **Policy Review**: Security and access policies were reviewed and refined using AI assistance due to limited prior experience in this area
 
-## Important Notes
+## 📝 Important Notes
 
 The use of AI assistance did not reduced the necessity for a thorough understanding, coding proficiency and validation of the implemented solution.
 
