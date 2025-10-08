@@ -56,13 +56,13 @@ gh pr edit <PR-NUMBER> --add-label "deploy:production"
 
 Push tags matching these patterns:
 - `dev-*` → Deploys to development
-- `staging-*` → Deploys to staging
-- `prod-*` → Deploys to production
+- `stg-*` → Deploys to staging
+- `prd-*` → Deploys to production
 
 **Example:**
 ```bash
-git tag prod-v1.0.0
-git push origin prod-v1.0.0
+git tag prd-v1.0.0
+git push origin prd-v1.0.0
 ```
 
 #### 4️⃣ Push to Main Branch
@@ -73,9 +73,22 @@ Pushing to `main` automatically deploys to **production** by default.
 
 Each environment uses:
 - **tfvars file**: `environments/{environment}/terraform.tfvars`
+- **Backend config file**: `environments/{environment}/tfbackend.hcl`
 - **Terraform state**: `{environment}/terraform.tfstate` in your S3 bucket
 
-Create environment-specific tfvars by copying from `environments/production/terraform.tfvars` and adjusting values like instance types, scaling, regions, etc.
+Create environment-specific configurations:
+1. Copy `environments/production/terraform.tfvars` and adjust values like instance types, scaling, regions, etc.
+2. Create `environments/{environment}/tfbackend.hcl` with backend configuration:
+
+```hcl
+bucket       = "your-terraform-state-bucket"
+key          = "{environment}/terraform.tfstate"
+region       = "your-aws-region"
+use_lockfile = true
+encrypt      = true
+```
+
+The pipeline will automatically use the appropriate backend configuration file during `terraform init`.
 
 ## 🔐 AWS Authentication Setup
 
@@ -146,7 +159,6 @@ Add the following as GitHub repository variables/secrets:
 
 **Variables**:
 - `AWS_REGION`: Your AWS region (e.g., `us-east-1`)
-- `TF_STATE_BUCKET`: S3 bucket name for Terraform state
 
 **Secrets**:
 - `AWS_ROLE_ARN`: The ARN of the IAM role created above (e.g., `arn:aws:iam::123456789012:role/GitHubActionsRole`)
