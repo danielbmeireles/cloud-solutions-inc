@@ -39,7 +39,7 @@ repos:
     hooks:
       - id: terraform-docs-go
         name: Terraform Documentation
-        args: [markdown, ., --output-mode, replace, --output-file, README.md]
+        args: [markdown, ., --output-mode, replace, --output-file, docs/TERRAFORM.md]
 
   - repo: https://github.com/bridgecrewio/checkov.git
     rev: 3.2.473
