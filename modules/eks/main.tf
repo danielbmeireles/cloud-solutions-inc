@@ -398,5 +398,63 @@ resource "aws_eks_addon" "ebs_csi_driver" {
   }
 }
 
+# Kubernetes Service Account for AWS Load Balancer Controller
+resource "kubernetes_service_account" "aws_load_balancer_controller" {
+  count = var.install_aws_load_balancer_controller ? 1 : 0
+
+  metadata {
+    name      = "aws-load-balancer-controller"
+    namespace = "kube-system"
+    labels = {
+      "app.kubernetes.io/name"      = "aws-load-balancer-controller"
+      "app.kubernetes.io/component" = "controller"
+    }
+    annotations = {
+      "eks.amazonaws.com/role-arn" = aws_iam_role.aws_load_balancer_controller.arn
+    }
+  }
+
+  depends_on = [aws_eks_node_group.main]
+}
+
+# Helm Release for AWS Load Balancer Controller
+resource "helm_release" "aws_load_balancer_controller" {
+  count = var.install_aws_load_balancer_controller ? 1 : 0
+
+  name       = "aws-load-balancer-controller"
+  repository = "https://aws.github.io/eks-charts"
+  chart      = "aws-load-balancer-controller"
+  version    = var.aws_load_balancer_controller_chart_version
+  namespace  = "kube-system"
+
+  set = [{
+    name  = "clusterName"
+    value = aws_eks_cluster.main.name
+    },
+    {
+      name  = "serviceAccount.create"
+      value = "false"
+    },
+    {
+      name  = "serviceAccount.name"
+      value = "aws-load-balancer-controller"
+    },
+    {
+      name  = "region"
+      value = data.aws_region.current.region
+    },
+    {
+      name  = "vpcId"
+      value = var.vpc_id
+    }
+  ]
+
+  depends_on = [
+    kubernetes_service_account.aws_load_balancer_controller,
+    aws_eks_addon.vpc_cni,
+    aws_eks_addon.coredns
+  ]
+}
+
 # Data  Source to get current region
 data "aws_region" "current" {}

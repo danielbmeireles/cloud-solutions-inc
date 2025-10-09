@@ -69,7 +69,7 @@ output "kubeconfig" {
     cluster_name                       = aws_eks_cluster.main.name
     cluster_endpoint                   = aws_eks_cluster.main.endpoint
     cluster_certificate_authority_data = aws_eks_cluster.main.certificate_authority[0].data
-    region                             = data.aws_region.current.name
+    region                             = data.aws_region.current.region
   })
   sensitive = true
 }
