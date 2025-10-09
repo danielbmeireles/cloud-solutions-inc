@@ -106,3 +106,28 @@ output "ebs_kms_key_arn" {
   value       = module.kms.ebs_key_arn
   sensitive   = true
 }
+
+output "argocd_namespace" {
+  description = "Namespace where ArgoCD is deployed"
+  value       = module.argocd.namespace
+}
+
+output "argocd_server_service_name" {
+  description = "ArgoCD server service name"
+  value       = module.argocd.argocd_server_service_name
+}
+
+output "argocd_port_forward_command" {
+  description = "Command to port-forward to ArgoCD server"
+  value       = "kubectl port-forward svc/${module.argocd.argocd_server_service_name} -n ${module.argocd.namespace} 8080:443"
+}
+
+output "argocd_initial_password_command" {
+  description = "Command to retrieve ArgoCD initial admin password"
+  value       = "kubectl -n ${module.argocd.namespace} get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
+}
+
+output "argocd_ingress_url_command" {
+  description = "Command to get ArgoCD ingress URL"
+  value       = "kubectl get ingress -n ${module.argocd.namespace} argocd-server -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'"
+}
