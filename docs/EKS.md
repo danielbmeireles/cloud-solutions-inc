@@ -60,35 +60,58 @@ availability_zones = ["eu-west-1a", "eu-west-1b", "eu-west-1c"]
 
 ## 🔌 Accessing the EKS Cluster
 
-### 🔧 Configure kubectl
+### 🔐 Granting SSO User Access to EKS Cluster
 
-```bash
-# Using AWS CLI
-aws eks update-kubeconfig --region eu-west-1 --name cloud-solutions-production-cluster
+If you're using AWS IAM Identity Center (SSO), you'll need to grant access to the cluster after it's created. SSO roles have a special ARN format that includes the region and session information.
 
-# Or using Terraform output
-terraform output -raw configure_kubectl | bash
+#### 📋 Step 1: Get Your SSO Role ARN
+
+First, determine your SSO role ARN. When you assume an SSO role, it has this format:
+```
+arn:aws:iam::ACCOUNT_ID:role/aws-reserved/sso.amazonaws.com/REGION/AWSReservedSSO_PermissionSetName_UniqueID
 ```
 
-### ✅ Verify Access
+You can find this by running:
+```bash
+aws sts get-caller-identity
+```
+
+#### 🔧 Step 2: Create Access Entry
+
+Use the `eks-access.sh` script provided in the `scripts/` directory to create the access entry:
 
 ```bash
-kubectl cluster-info
+# Set the required environment variables
+export EKS_CLUSTER_NAME="cloud-solutions-production-cluster"
+export EKS_SSO_ROLE_ARN="arn:aws:iam::123456789012:role/aws-reserved/sso.amazonaws.com/eu-west-1/AWSReservedSSO_AdminAccess_xxxxx"
+export AWS_REGION="eu-west-1"
+
+# Run the script
+./scripts/eks-access.sh
+```
+
+#### ✅ Step 3: Verify Access
+
+# Test access
 kubectl get nodes
 kubectl get all --all-namespaces
 ```
 
-### 🔐 Sensitive Outputs
+#### 🌐 Alternative: Using AWS Console
 
-```bash
-# View all outputs including sensitive ones
-terraform output -json
+You can also grant access via the AWS Console:
+1. Navigate to EKS → Your Cluster → **Access** tab
+2. Click **Create access entry**
+3. Select your SSO role from the IAM principal dropdown
+4. Choose **AmazonEKSClusterAdminPolicy** or another appropriate policy
+5. Click **Add**
 
-# Get specific sensitive output
-terraform output -raw eks_cluster_arn
-terraform output -raw eks_oidc_provider_arn
-terraform output -raw kubeconfig
-```
+#### 💡 Important Notes
+
+- **SSO roles cannot be managed in Terraform** directly due to their session-based nature
+- Each SSO user who needs cluster access must have their session role added
+- For production environments, consider using **IAM roles** that SSO users can assume, rather than SSO session roles directly
+- The access entry only needs to be created once per IAM principal
 
 ### 🔑 Using IRSA (IAM Roles for Service Accounts)
 
