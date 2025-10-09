@@ -46,7 +46,7 @@ cd cloud-solutions-inc
 ### 2. Create Terraform State Bucket
 
 ```bash
-./bootstrap-terraform-backend.sh
+./scripts/bootstrap-terraform-backend.sh
 ```
 
 Or with custom settings:
@@ -54,7 +54,7 @@ Or with custom settings:
 ```bash
 export TF_STATE_BUCKET="my-terraform-state"
 export AWS_REGION="eu-west-1"
-./bootstrap-terraform-backend.sh
+./scripts/bootstrap-terraform-backend.sh
 ```
 
 ### 3. Configure Variables
