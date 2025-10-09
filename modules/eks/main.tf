@@ -4,6 +4,10 @@ resource "aws_eks_cluster" "main" {
   role_arn = aws_iam_role.cluster.arn
   version  = var.kubernetes_version
 
+  access_config {
+    authentication_mode = "API_AND_CONFIG_MAP"
+  }
+
   vpc_config {
     subnet_ids              = concat(var.private_subnets, var.public_subnets)
     endpoint_private_access = true
