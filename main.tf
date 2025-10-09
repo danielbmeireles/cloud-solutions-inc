@@ -44,6 +44,10 @@ module "eks" {
   kube_proxy_addon_version = var.kube_proxy_addon_version
   ebs_csi_addon_version    = var.ebs_csi_addon_version
 
+  # AWS Load Balancer Controller
+  install_aws_load_balancer_controller         = var.install_aws_load_balancer_controller
+  aws_load_balancer_controller_chart_version   = var.aws_load_balancer_controller_chart_version
+
   # KMS encryption keys
   eks_kms_key_arn = module.kms.eks_key_arn
   ebs_kms_key_arn = module.kms.ebs_key_arn
