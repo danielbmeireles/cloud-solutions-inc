@@ -86,6 +86,13 @@ jobs:
           # Default: production for main branch pushes
           echo "environment=production" >> $GITHUB_OUTPUT
 
+      - name: Display Selected Environment
+        run: |
+          echo "## Selected Environment: ${{ steps.set-env.outputs.environment }} 🎯" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Ref**: ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
+
   terraform-validate:
     name: Terraform Validate
     runs-on: ubuntu-latest
