@@ -4,20 +4,20 @@ This document cover the most important aspects related to Amazon EKS configurati
 
 ## 📑 Table of Contents <!-- omit in toc -->
 
-- [Configuration Options](#configuration-options)
-- [Accessing the EKS Cluster](#accessing-the-eks-cluster)
-- [Exposing Applications with Load Balancers](#exposing-applications-with-load-balancers)
-- [Monitoring and Operations](#monitoring-and-operations)
-- [Cleanup](#cleanup)
-- [Troubleshooting](#troubleshooting)
-- [Best Practices](#best-practices)
+- [⚙️ Configuration Options](#️-configuration-options)
+- [🔌 Accessing the EKS Cluster](#-accessing-the-eks-cluster)
+- [🌐 Exposing Applications with Load Balancers](#-exposing-applications-with-load-balancers)
+- [📊 Monitoring and Operations](#-monitoring-and-operations)
+- [🧹 Cleanup](#-cleanup)
+- [🔧 Troubleshooting](#-troubleshooting)
+- [✨ Best Practices](#-best-practices)
 
 ## ⚙️ Configuration Options
 
 ### 🎛️ EKS Cluster Configuration
 
 ```hcl
-kubernetes_version = "1.31"  # Supported: 1.28, 1.29, 1.30, 1.31
+kubernetes_version = "1.34"  # Supported: 1.31, 1.32, 1.33, 1.34
 
 # Restrict API server access (recommended for production)
 cluster_endpoint_public_access_cidrs = ["YOUR_IP/32"]

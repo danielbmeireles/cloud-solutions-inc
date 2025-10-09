@@ -24,7 +24,8 @@ Production-ready AWS infrastructure for Cloud Solutions Inc., deployed using Ter
 
 ## Features
 
-- **EKS Cluster**: Managed Kubernetes 1.31 with auto-scaling node groups
+- **Multi-environment**: Separate configurations for development, staging, and production
+- **EKS Cluster**: Managed Kubernetes 1.34 with auto-scaling node groups
 - **Multi-AZ**: High availability across 3 availability zones
 - **End-to-End Encryption**: KMS-encrypted secrets and EBS volumes, TLS in transit
 - **Network Isolation**: Private subnets for workloads, VPC Flow Logs
@@ -94,11 +95,11 @@ terraform apply
 
 Automated deployments via GitHub Actions on `main` branch push. Customize workflow in `.github/workflows/deploy.yml`.
 
-Required secrets:
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
+Required secret:
+- `AWS_ROLE_ARN`
+
+Required variable:
 - `AWS_REGION`
-- `TF_STATE_BUCKET`
 
 See [CICD.md](docs/CICD.md) for more details.
 

@@ -28,6 +28,7 @@ Override defaults using environment variables:
 
 ```bash
 export TF_STATE_BUCKET="my-custom-terraform-state-bucket"
+export TF_ENVIRONMENT="staging"
 export AWS_REGION="eu-west-1"
 ./bootstrap-terraform-backend.sh
 ```
@@ -45,22 +46,18 @@ export AWS_REGION="eu-west-1"
 After running the bootstrap script:
 
 1. Copy the backend configuration output by the script
-2. Add it to your Terraform configuration (e.g., `backend.tf`)
-3. Run `terraform init` to initialize the backend
+2. Add it to your Terraform configuration (`environments/<env>/tfbackend.hcl`)
+3. Run `terraform init -backend-config=environments/<env>/tfbackend.hcl` to initialize the backend
 4. If migrating existing state, Terraform will prompt you to copy it
 
 ## 🏋️ Example Backend Configuration
 
 ```hcl
-terraform {
-  backend "s3" {
     bucket         = "terraform-state-123456789012"
-    key            = "terraform.tfstate"
+    key            = "staging/terraform.tfstate"
     region         = "us-east-1"
     use_lockfile   = true
     encrypt        = true
-  }
-}
 ```
 
 ## 😵‍💫 Troubleshooting

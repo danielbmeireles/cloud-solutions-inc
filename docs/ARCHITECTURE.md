@@ -4,9 +4,9 @@ This document describes the architecture and design decisions for the Cloud Solu
 
 ## 📑 Table of Contents <!-- omit in toc -->
 
-- [Infrastructure Components](#infrastructure-components)
-- [Key Design Decisions](#key-design-decisions)
-- [Modules](#modules)
+- [🧩 Infrastructure Components](#-infrastructure-components)
+- [💡 Key Design Decisions](#-key-design-decisions)
+- [📦 Modules](#-modules)
 
 ## 🧩 Infrastructure Components
 
@@ -17,7 +17,7 @@ This infrastructure implements a highly available, multi-AZ architecture on AWS 
 - **Amazon EKS Cluster**: Managed Kubernetes control plane for orchestrating containerized applications
 - **EKS Node Group**: Auto-scaling worker nodes running on EC2 instances
 - **Auto Scaling**: Dynamic node scaling based on workload demands
-- **Kubernetes Version**: 1.31 (configurable)
+- **Kubernetes Version**: 1.34 (configurable)
 
 #### 🔌 Kubernetes Add-ons
 

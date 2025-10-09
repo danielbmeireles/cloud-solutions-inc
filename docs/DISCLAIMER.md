@@ -15,9 +15,7 @@ This project was developed with significant assistance from AI tools:
 
 ## 📝 Important Notes
 
-The use of AI assistance did not reduced the necessity for a thorough understanding, coding proficiency and validation of the implemented solution.
-
-Although AI tools have greatly accelerated development and enhanced code quality, all content generated has been written, reviewed, and tested by me.
+The core of this project-its design, code, and validation—is a product of my direct effort and expertise. I leveraged AI as a powerful tool to enhance efficiency and explore optimizations, but its use did not diminish the necessity for a deep conceptual understanding and hands-on coding proficiency. Every aspect of the implementation was meticulously reviewed and tested by me, ensuring the final solution is both innovative and sound.
 
 ---
 
