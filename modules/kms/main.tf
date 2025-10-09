@@ -151,7 +151,7 @@ resource "aws_kms_key" "ebs" {
         Resource = "*"
         Condition = {
           StringEquals = {
-            "kms:ViaService" = "ec2.${data.aws_region.current.name}.amazonaws.com"
+            "kms:ViaService" = "ec2.${data.aws_region.current.region}.amazonaws.com"
           }
         }
       }
