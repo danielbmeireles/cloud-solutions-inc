@@ -79,3 +79,19 @@ module "monitoring" {
   eks_cluster_name = module.eks.cluster_name
   alarm_email      = var.alarm_email
 }
+
+# ArgoCD Module
+module "argocd" {
+  source = "./modules/argocd"
+
+  namespace              = "argocd"
+  argocd_chart_version   = var.argocd_chart_version
+  argocd_domain          = var.argocd_domain
+  server_insecure        = var.argocd_server_insecure
+  server_service_type    = var.argocd_server_service_type
+  ingress_enabled        = var.argocd_ingress_enabled
+  ingress_class_name     = var.argocd_ingress_class_name
+  ingress_annotations    = var.argocd_ingress_annotations
+
+  depends_on = [module.eks]
+}
