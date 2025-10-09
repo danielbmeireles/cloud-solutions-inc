@@ -31,6 +31,23 @@ resource "aws_eks_cluster" "main" {
   }
 }
 
+# EKS Access Entry and Policy Association for SSO Admin Role (temp solution)
+resource "aws_eks_access_entry" "sso_admin" {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = "arn:aws:iam::952970729693:role/AWSReservedSSO_AdministratorAccess_0c5a570898264fb9"
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "sso_admin_policy" {
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = "arn:aws:iam::952970729693:role/AWSReservedSSO_AdministratorAccess_0c5a570898264fb9"
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+  access_scope {
+    type = "cluster"
+  }
+}
+
 # CloudWatch Log Group for EKS
 resource "aws_cloudwatch_log_group" "cluster" {
   name              = "/aws/eks/${var.project_name}-${var.environment}/cluster"
