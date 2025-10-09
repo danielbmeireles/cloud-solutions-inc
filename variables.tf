@@ -109,6 +109,19 @@ variable "ebs_csi_addon_version" {
   default     = "v1.31.0-eksbuild.1"
 }
 
+# AWS Load Balancer Controller Configuration
+variable "install_aws_load_balancer_controller" {
+  description = "Whether to install AWS Load Balancer Controller via Helm"
+  type        = bool
+  default     = true
+}
+
+variable "aws_load_balancer_controller_chart_version" {
+  description = "AWS Load Balancer Controller Helm chart version"
+  type        = string
+  default     = "1.14.0"
+}
+
 # Monitoring
 variable "alarm_email" {
   description = "Email address for CloudWatch alarms"
