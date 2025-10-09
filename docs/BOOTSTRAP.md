@@ -19,7 +19,7 @@ This document provides instructions for bootstrapping a Terraform remote state b
 Run the script with default settings (bucket name will include your AWS account ID):
 
 ```bash
-./bootstrap-terraform-backend.sh
+./scripts/bootstrap-terraform-backend.sh
 ```
 
 ### Custom Configuration
@@ -30,7 +30,7 @@ Override defaults using environment variables:
 export TF_STATE_BUCKET="my-custom-terraform-state-bucket"
 export TF_ENVIRONMENT="staging"
 export AWS_REGION="eu-west-1"
-./bootstrap-terraform-backend.sh
+./scripts/bootstrap-terraform-backend.sh
 ```
 
 ## 🕌 What the Script Creates
