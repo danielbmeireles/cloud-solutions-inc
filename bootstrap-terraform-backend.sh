@@ -11,10 +11,12 @@ export AWS_PAGER=""
 
 # Configuration
 BUCKET_NAME="${TF_STATE_BUCKET:-terraform-state-$(aws sts get-caller-identity --query Account --output text)}"
+ENVIRONMENT="${TF_ENVIRONMENT:-development}"
 REGION="${AWS_REGION:-eu-west-1}"
 
 echo "=== Terraform Backend Bootstrap ==="
 echo "Bucket: $BUCKET_NAME"
+echo "Environment: $ENVIRONMENT"
 echo "Region: $REGION"
 
 # Create S3 bucket
@@ -68,15 +70,12 @@ aws s3api put-public-access-block \
 
 echo ""
 echo "=== Bootstrap Complete ==="
-echo "Add this backend configuration to your Terraform code:"
+echo "Add this backend configuration to the corresponding environment folder:"
 echo ""
-echo "terraform {"
-echo "  backend \"s3\" {"
+echo "    # tfbackend.hcl"
 echo "    bucket         = \"$BUCKET_NAME\""
-echo "    key            = \"terraform.tfstate\""
+echo "    key            = \"$ENVIRONMENT/terraform.tfstate\""
 echo "    region         = \"$REGION\""
 echo "    use_lockfile   = true"
 echo "    encrypt        = true"
-echo "  }"
-echo "}"
 echo ""
