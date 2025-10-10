@@ -170,9 +170,3 @@ resource "aws_kms_alias" "ebs" {
   name          = "alias/${var.project_name}-${var.environment}-ebs"
   target_key_id = aws_kms_key.ebs.key_id
 }
-
-# Data source to get current account ID
-data "aws_caller_identity" "current" {}
-
-# Data source to get current region
-data "aws_region" "current" {}
