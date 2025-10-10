@@ -230,7 +230,7 @@ resource "aws_iam_role_policy_attachment" "node_group_registry_policy" {
   role       = aws_iam_role.node_group.name
 }
 
-# Additional policies for EFS and S3 access
+# Additional policies for EFS access
 resource "aws_iam_role_policy" "node_group_additional" {
   name = "${var.project_name}-${var.environment}-node-group-additional"
   role = aws_iam_role.node_group.id
@@ -238,15 +238,6 @@ resource "aws_iam_role_policy" "node_group_additional" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:ListBucket"
-        ]
-        Resource = "*"
-      },
       {
         Effect = "Allow"
         Action = [
@@ -261,10 +252,6 @@ resource "aws_iam_role_policy" "node_group_additional" {
 }
 
 # OIDC Provider for EKS
-data "tls_certificate" "cluster" {
-  url = aws_eks_cluster.main.identity[0].oidc[0].issuer
-}
-
 resource "aws_iam_openid_connect_provider" "cluster" {
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = [data.tls_certificate.cluster.certificates[0].sha1_fingerprint]
@@ -343,6 +330,39 @@ resource "aws_iam_role_policy_attachment" "ebs_csi_driver" {
   role       = aws_iam_role.ebs_csi_driver.name
 }
 
+# EFS CSI Driver IAM Role
+resource "aws_iam_role" "efs_csi_driver" {
+  name = "${var.project_name}-${var.environment}-efs-csi-driver"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRoleWithWebIdentity"
+        Effect = "Allow"
+        Principal = {
+          Federated = aws_iam_openid_connect_provider.cluster.arn
+        }
+        Condition = {
+          StringEquals = {
+            "${replace(aws_iam_openid_connect_provider.cluster.url, "https://", "")}:sub" = "system:serviceaccount:kube-system:efs-csi-controller-sa"
+            "${replace(aws_iam_openid_connect_provider.cluster.url, "https://", "")}:aud" = "sts.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-efs-csi-driver-role"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "efs_csi_driver" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEFSCSIDriverPolicy"
+  role       = aws_iam_role.efs_csi_driver.name
+}
+
 # EKS Addon - VPC CNI
 resource "aws_eks_addon" "vpc_cni" {
   cluster_name                = aws_eks_cluster.main.name
@@ -395,6 +415,20 @@ resource "aws_eks_addon" "ebs_csi_driver" {
 
   tags = {
     Name = "${var.project_name}-${var.environment}-ebs-csi-driver"
+  }
+}
+
+# EKS Addon - EFS CSI Driver
+resource "aws_eks_addon" "efs_csi_driver" {
+  cluster_name                = aws_eks_cluster.main.name
+  addon_name                  = "aws-efs-csi-driver"
+  addon_version               = var.efs_csi_addon_version
+  service_account_role_arn    = aws_iam_role.efs_csi_driver.arn
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "PRESERVE"
+
+  tags = {
+    Name = "${var.project_name}-${var.environment}-efs-csi-driver"
   }
 }
 
@@ -454,14 +488,6 @@ resource "helm_release" "aws_load_balancer_controller" {
     aws_eks_addon.vpc_cni,
     aws_eks_addon.coredns
   ]
-}
-
-# Data  Source to get current region
-data "aws_region" "current" {}
-
-# "Gambiarra" técnica - Brazilian-style workaround for provider/module limitations
-data "aws_eks_cluster_auth" "eks" {
-  name = aws_eks_cluster.main.name
 }
 
 provider "kubernetes" {
