@@ -59,25 +59,20 @@ output "ebs_csi_driver_role_arn" {
   sensitive   = true
 }
 
-output "s3_bucket_name" {
-  description = "Name of the S3 bucket"
-  value       = module.storage.s3_bucket_name
+output "efs_csi_driver_role_arn" {
+  description = "IAM role ARN for EFS CSI Driver"
+  value       = module.eks.efs_csi_driver_role_arn
+  sensitive   = true
 }
 
 output "efs_id" {
   description = "ID of the EFS file system"
-  value       = module.storage.efs_id
+  value       = module.efs.efs_id
 }
 
 output "cloudwatch_log_group" {
   description = "Name of the CloudWatch log group"
-  value       = module.monitoring.log_group_name
-}
-
-output "kubeconfig" {
-  description = "kubectl config for accessing the EKS cluster"
-  value       = module.eks.kubeconfig
-  sensitive   = true
+  value       = module.cloudwatch.log_group_name
 }
 
 output "configure_kubectl" {

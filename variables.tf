@@ -109,6 +109,12 @@ variable "ebs_csi_addon_version" {
   default     = "v1.31.0-eksbuild.1"
 }
 
+variable "efs_csi_addon_version" {
+  description = "Version of the EFS CSI driver addon"
+  type        = string
+  default     = "v2.1.12-eksbuild.1"
+}
+
 # AWS Load Balancer Controller Configuration
 variable "install_aws_load_balancer_controller" {
   description = "Whether to install AWS Load Balancer Controller via Helm"
