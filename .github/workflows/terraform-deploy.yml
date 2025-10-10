@@ -5,26 +5,26 @@ on:
     branches:
       - main
     paths:
-      - '*.tf'
-      - 'modules/**'
-      - '.github/workflows/terraform-deploy.yml'
-      - 'environments/**'
+      - "*.tf"
+      - "modules/**"
+      - ".github/workflows/terraform-deploy.yml"
+      - "environments/**"
     tags:
-      - 'dev-*'
-      - 'stg-*'
-      - 'prd-*'
+      - "dev-*"
+      - "stg-*"
+      - "prd-*"
   pull_request:
     branches:
       - main
     paths:
-      - '*.tf'
-      - 'modules/**'
-      - '.github/workflows/terraform-deploy.yml'
-      - 'environments/**'
+      - "*.tf"
+      - "modules/**"
+      - ".github/workflows/terraform-deploy.yml"
+      - "environments/**"
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy'
+        description: "Environment to deploy"
         required: true
         type: choice
         options:
@@ -34,7 +34,7 @@ on:
         default: development
 
 env:
-  TF_VERSION: 1.13.3
+  TF_VERSION: ${{ vars.TF_VERSION }}
 
 jobs:
   determine-environment:
@@ -78,7 +78,7 @@ jobs:
             elif [[ "$TAG" == dev-* ]]; then
               echo "environment=development" >> $GITHUB_OUTPUT
             else
-              echo "environment=production" >> $GITHUB_OUTPUT
+              echo "environment=development" >> $GITHUB_OUTPUT
             fi
             exit 0
           fi
@@ -145,6 +145,15 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
+      - name: Install tf-summarize
+        run: |
+          wget -q -O - https://github.com/dineshba/tf-summarize/releases/latest/download/tf-summarize_linux_amd64.tar.gz | sudo tar -xz -C /usr/local/bin/ tf-summarize
+
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
       - name: Terraform Init
         id: init
         env:
@@ -159,12 +168,28 @@ jobs:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
         run: |
           if [ -f "environments/${ENVIRONMENT}/terraform.tfvars" ]; then
-            terraform plan -var-file="environments/${ENVIRONMENT}/terraform.tfvars" -no-color -input=false
+            terraform plan -var-file="environments/${ENVIRONMENT}/terraform.tfvars" -no-color -input=false -out=tfplan.binary
           else
             echo "::warning::No tfvars file found for ${ENVIRONMENT}, running without tfvars"
-            terraform plan -no-color -input=false
+            terraform plan -no-color -input=false -out=tfplan.binary
           fi
+          terraform show -json tfplan.binary > tfplan.json
         continue-on-error: true
+
+      - name: Generate Plan Summary
+        if: steps.plan.outcome == 'success'
+        run: |
+          echo "## Terraform Plan Summary 📊" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          tf-summarize -md tfplan.json >> $GITHUB_STEP_SUMMARY
+
+      - name: Generate Cost Estimate
+        if: steps.plan.outcome == 'success'
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Infrastructure Cost Estimate 💰" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          infracost breakdown --path tfplan.json --format markdown --show-skipped >> $GITHUB_STEP_SUMMARY
 
       - name: Comment PR
         if: github.event_name == 'pull_request'
