@@ -262,41 +262,6 @@ resource "aws_iam_openid_connect_provider" "cluster" {
   }
 }
 
-# AWS Load Balancer Controller IAM Role
-resource "aws_iam_role" "aws_load_balancer_controller" {
-  name = "${var.project_name}-${var.environment}-aws-lb-controller"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRoleWithWebIdentity"
-        Effect = "Allow"
-        Principal = {
-          Federated = aws_iam_openid_connect_provider.cluster.arn
-        }
-        Condition = {
-          StringEquals = {
-            "${replace(aws_iam_openid_connect_provider.cluster.url, "https://", "")}:sub" = "system:serviceaccount:kube-system:aws-load-balancer-controller"
-            "${replace(aws_iam_openid_connect_provider.cluster.url, "https://", "")}:aud" = "sts.amazonaws.com"
-          }
-        }
-      }
-    ]
-  })
-
-  tags = {
-    Name = "${var.project_name}-${var.environment}-aws-lb-controller-role"
-  }
-}
-
-resource "aws_iam_role_policy" "aws_load_balancer_controller" {
-  name = "${var.project_name}-${var.environment}-aws-lb-controller-policy"
-  role = aws_iam_role.aws_load_balancer_controller.id
-
-  policy = file("${path.module}/policies/aws-load-balancer-controller-policy.json")
-}
-
 # EBS CSI Driver IAM Role
 resource "aws_iam_role" "ebs_csi_driver" {
   name = "${var.project_name}-${var.environment}-ebs-csi-driver"
@@ -429,77 +394,5 @@ resource "aws_eks_addon" "efs_csi_driver" {
 
   tags = {
     Name = "${var.project_name}-${var.environment}-efs-csi-driver"
-  }
-}
-
-# Kubernetes Service Account for AWS Load Balancer Controller
-resource "kubernetes_service_account" "aws_load_balancer_controller" {
-  count = var.install_aws_load_balancer_controller ? 1 : 0
-
-  metadata {
-    name      = "aws-load-balancer-controller"
-    namespace = "kube-system"
-    labels = {
-      "app.kubernetes.io/name"      = "aws-load-balancer-controller"
-      "app.kubernetes.io/component" = "controller"
-    }
-    annotations = {
-      "eks.amazonaws.com/role-arn" = aws_iam_role.aws_load_balancer_controller.arn
-    }
-  }
-
-  depends_on = [aws_eks_node_group.main]
-}
-
-# Helm Release for AWS Load Balancer Controller
-resource "helm_release" "aws_load_balancer_controller" {
-  count = var.install_aws_load_balancer_controller ? 1 : 0
-
-  name       = "aws-load-balancer-controller"
-  repository = "https://aws.github.io/eks-charts"
-  chart      = "aws-load-balancer-controller"
-  version    = var.aws_load_balancer_controller_chart_version
-  namespace  = "kube-system"
-
-  set = [{
-    name  = "clusterName"
-    value = aws_eks_cluster.main.name
-    },
-    {
-      name  = "serviceAccount.create"
-      value = "false"
-    },
-    {
-      name  = "serviceAccount.name"
-      value = "aws-load-balancer-controller"
-    },
-    {
-      name  = "region"
-      value = data.aws_region.current.region
-    },
-    {
-      name  = "vpcId"
-      value = var.vpc_id
-    }
-  ]
-
-  depends_on = [
-    kubernetes_service_account.aws_load_balancer_controller,
-    aws_eks_addon.vpc_cni,
-    aws_eks_addon.coredns
-  ]
-}
-
-provider "kubernetes" {
-  host                   = aws_eks_cluster.main.id
-  cluster_ca_certificate = base64decode(aws_eks_cluster.main.certificate_authority[0].data)
-  token                  = data.aws_eks_cluster_auth.eks.token
-}
-
-provider "helm" {
-  kubernetes = {
-    host                   = aws_eks_cluster.main.id
-    cluster_ca_certificate = base64decode(aws_eks_cluster.main.certificate_authority[0].data)
-    token                  = data.aws_eks_cluster_auth.eks.token
   }
 }

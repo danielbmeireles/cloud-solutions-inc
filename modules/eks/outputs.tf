@@ -38,6 +38,11 @@ output "oidc_provider_arn" {
   value       = aws_iam_openid_connect_provider.cluster.arn
 }
 
+output "oidc_provider" {
+  description = "OIDC provider URL without https://"
+  value       = replace(aws_iam_openid_connect_provider.cluster.url, "https://", "")
+}
+
 output "node_group_id" {
   description = "ID of the EKS node group"
   value       = aws_eks_node_group.main.id
@@ -51,11 +56,6 @@ output "node_group_arn" {
 output "node_group_role_arn" {
   description = "IAM role ARN of the EKS node group"
   value       = aws_iam_role.node_group.arn
-}
-
-output "aws_load_balancer_controller_role_arn" {
-  description = "IAM role ARN for AWS Load Balancer Controller"
-  value       = aws_iam_role.aws_load_balancer_controller.arn
 }
 
 output "ebs_csi_driver_role_arn" {

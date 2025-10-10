@@ -116,16 +116,3 @@ variable "ebs_kms_key_arn" {
   description = "ARN of the KMS key for EBS volume encryption"
   type        = string
 }
-
-# AWS Load Balancer Controller Configuration
-variable "install_aws_load_balancer_controller" {
-  description = "Whether to install AWS Load Balancer Controller via Helm"
-  type        = bool
-  default     = true
-}
-
-variable "aws_load_balancer_controller_chart_version" {
-  description = "AWS Load Balancer Controller Helm chart version"
-  type        = string
-  default     = "1.13.0"
-}
