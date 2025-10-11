@@ -1,0 +1,70 @@
+# Default values for aws-load-balancer-controller wrapper chart
+
+# Service Account configuration
+serviceAccount:
+  create: true
+  name: aws-load-balancer-controller
+  annotations:
+    # This will be templated from Terraform output
+    eks.amazonaws.com/role-arn: ""
+
+# Values passed to the upstream aws-load-balancer-controller chart
+controller:
+  # Cluster name - must be provided
+  clusterName: ""
+
+  # Service account configuration
+  serviceAccount:
+    # Don't create SA in the upstream chart, we manage it
+    create: false
+    name: aws-load-balancer-controller
+
+  # AWS region - must be provided
+  region: ""
+
+  # VPC ID - must be provided
+  vpcId: ""
+
+  # Resource requests/limits
+  resources:
+    limits:
+      cpu: 200m
+      memory: 500Mi
+    requests:
+      cpu: 100m
+      memory: 200Mi
+
+  # Additional configuration
+  enableShield: false
+  enableWaf: false
+  enableWafv2: false
+
+  # Logging
+  logLevel: info
+
+  # Pod disruption budget
+  podDisruptionBudget:
+    maxUnavailable: 1
+
+  # Replicas
+  replicaCount: 2
+
+  # Node selector
+  nodeSelector: {}
+
+  # Tolerations
+  tolerations: []
+
+  # Affinity
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                    - aws-load-balancer-controller
+            topologyKey: kubernetes.io/hostname
