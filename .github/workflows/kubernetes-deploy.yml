@@ -1,26 +1,18 @@
-name: Terraform Deploy
+name: Kubernetes Deploy
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Terraform Deploy"]
+    types:
+      - completed
     branches:
       - main
-    paths:
-      - "*.tf"
-      - "modules/**"
-      - ".github/workflows/terraform-deploy.yml"
-      - "environments/**"
-    tags:
-      - "dev-*"
-      - "stg-*"
-      - "prd-*"
   pull_request:
     branches:
       - main
     paths:
-      - "*.tf"
-      - "modules/**"
-      - ".github/workflows/terraform-deploy.yml"
-      - "environments/**"
+      - "kubernetes/**"
+      - ".github/workflows/kubernetes-deploy.yml"
   workflow_dispatch:
     inputs:
       environment:
@@ -40,10 +32,19 @@ jobs:
   determine-environment:
     name: Determine Environment
     runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     outputs:
       environment: ${{ steps.set-env.outputs.environment }}
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Determine environment
         id: set-env
         run: |
@@ -73,32 +74,52 @@ jobs:
             fi
           fi
 
-          # Priority 3: Git tags (dev-*, stg-*, prd-*)
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            TAG="${GITHUB_REF#refs/tags/}"
-            if [[ "$TAG" == prd-* ]]; then
-              echo "environment=production" >> $GITHUB_OUTPUT
-              exit 0
-            elif [[ "$TAG" == stg-* ]]; then
-              echo "environment=staging" >> $GITHUB_OUTPUT
-              exit 0
-            elif [[ "$TAG" == dev-* ]]; then
-              echo "environment=development" >> $GITHUB_OUTPUT
-              exit 0
-            else
-              echo "::error::Invalid tag format. Use dev-*, stg-*, or prd-* for deployments."
-              exit 1
-            fi
-          fi
+          # Priority 3: Inherit from terraform-deploy workflow
+          if [ "${{ github.event_name }}" == "workflow_run" ]; then
+            HEAD_BRANCH="${{ github.event.workflow_run.head_branch }}"
+            HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
 
-          # Priority 4: Push to main branch = production deployment
-          if [ "${{ github.ref }}" == "refs/heads/main" ] && [ "${{ github.event_name }}" == "push" ]; then
-            echo "environment=production" >> $GITHUB_OUTPUT
-            exit 0
+            # Check if this was triggered by a push to main
+            if [ "$HEAD_BRANCH" == "main" ]; then
+              # Get all tags pointing to this commit
+              TAGS=$(git tag --points-at "$HEAD_SHA" 2>/dev/null || echo "")
+
+              # If there are tags, use them; otherwise, it's a direct push to main (production)
+              if [ -z "$TAGS" ]; then
+                echo "environment=production" >> $GITHUB_OUTPUT
+                echo "Detected push to main branch → production deployment" >> $GITHUB_STEP_SUMMARY
+                exit 0
+              fi
+
+              # Find the first matching deployment tag
+              for TAG in $TAGS; do
+                if [[ "$TAG" == prd-* ]]; then
+                  echo "environment=production" >> $GITHUB_OUTPUT
+                  echo "Detected production tag: $TAG" >> $GITHUB_STEP_SUMMARY
+                  exit 0
+                elif [[ "$TAG" == stg-* ]]; then
+                  echo "environment=staging" >> $GITHUB_OUTPUT
+                  echo "Detected staging tag: $TAG" >> $GITHUB_STEP_SUMMARY
+                  exit 0
+                elif [[ "$TAG" == dev-* ]]; then
+                  echo "environment=development" >> $GITHUB_OUTPUT
+                  echo "Detected development tag: $TAG" >> $GITHUB_STEP_SUMMARY
+                  exit 0
+                fi
+              done
+
+              # If we got here with a tag that doesn't match our patterns, it's still a main push
+              echo "environment=production" >> $GITHUB_OUTPUT
+              echo "Detected push to main branch → production deployment" >> $GITHUB_STEP_SUMMARY
+              exit 0
+            fi
+
+            echo "::error::Kubernetes deployment blocked: Parent workflow was not triggered by main branch or valid tag."
+            exit 1
           fi
 
           # No default - fail if no valid trigger
-          echo "::error::Deployment blocked: No valid deployment trigger found."
+          echo "::error::Deployment blocked: Invalid trigger for Kubernetes deployment."
           exit 1
 
       - name: Display Selected Environment
@@ -106,10 +127,9 @@ jobs:
           echo "## Selected Environment: ${{ steps.set-env.outputs.environment }} 🎯" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Ref**: ${{ github.ref }}" >> $GITHUB_STEP_SUMMARY
 
   terraform-validate:
-    name: Terraform Validate
+    name: Terraform Validate (Kubernetes)
     runs-on: ubuntu-latest
     needs: determine-environment
     outputs:
@@ -126,16 +146,19 @@ jobs:
 
       - name: Terraform Format Check
         id: fmt
+        working-directory: kubernetes
         run: terraform fmt -check -recursive
 
       - name: Terraform Init
+        working-directory: kubernetes
         run: terraform init -backend=false
 
       - name: Terraform Validate
+        working-directory: kubernetes
         run: terraform validate
 
-  terraform-plan:
-    name: Terraform Plan (${{ needs.determine-environment.outputs.environment }})
+  kubernetes-plan:
+    name: Kubernetes Plan (${{ needs.determine-environment.outputs.environment }})
     runs-on: ubuntu-latest
     needs: [determine-environment, terraform-validate]
     if: github.event_name == 'pull_request'
@@ -164,13 +187,9 @@ jobs:
         run: |
           wget -q -O - https://github.com/dineshba/tf-summarize/releases/latest/download/tf-summarize_linux_amd64.tar.gz | sudo tar -xz -C /usr/local/bin/ tf-summarize
 
-      - name: Setup Infracost
-        uses: infracost/actions/setup@v3
-        with:
-          api-key: ${{ secrets.INFRACOST_API_KEY }}
-
       - name: Terraform Init
         id: init
+        working-directory: kubernetes
         env:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
         run: |
@@ -179,6 +198,7 @@ jobs:
 
       - name: Terraform Plan
         id: plan
+        working-directory: kubernetes
         env:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
         run: |
@@ -193,18 +213,11 @@ jobs:
 
       - name: Generate Plan Summary
         if: steps.plan.outcome == 'success'
+        working-directory: kubernetes
         run: |
-          echo "## Terraform Plan Summary 📊" >> $GITHUB_STEP_SUMMARY
+          echo "## Kubernetes Plan Summary 📊" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           tf-summarize -md tfplan.json >> $GITHUB_STEP_SUMMARY
-
-      - name: Generate Cost Estimate
-        if: steps.plan.outcome == 'success'
-        run: |
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Infrastructure Cost Estimate 💰" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          infracost breakdown --path tfplan.json --format markdown --show-skipped >> $GITHUB_STEP_SUMMARY
 
       - name: Comment PR
         if: github.event_name == 'pull_request'
@@ -217,20 +230,20 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WORKFLOW_TYPE: kubernetes
         run: bash .github/scripts/pr-comment.sh
 
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
-  terraform-apply:
-    name: Terraform Apply (${{ needs.determine-environment.outputs.environment }})
+  kubernetes-apply:
+    name: Kubernetes Apply (${{ needs.determine-environment.outputs.environment }})
     runs-on: ubuntu-latest
     needs: [determine-environment, terraform-validate]
     if: |
-      github.event_name == 'workflow_dispatch' ||
-      startsWith(github.ref, 'refs/tags/') ||
-      (github.ref == 'refs/heads/main' && github.event_name == 'push')
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      github.event_name == 'workflow_dispatch'
 
     permissions:
       contents: read
@@ -238,7 +251,6 @@ jobs:
 
     environment:
       name: ${{ needs.determine-environment.outputs.environment }}
-      url: ${{ steps.terraform-output.outputs.eks_endpoint }}
 
     steps:
       - name: Checkout code
@@ -257,6 +269,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
 
       - name: Terraform Init
+        working-directory: kubernetes
         env:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
         run: |
@@ -264,6 +277,7 @@ jobs:
             -backend-config="environments/${ENVIRONMENT}/tfbackend.hcl"
 
       - name: Terraform Plan
+        working-directory: kubernetes
         env:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
         run: |
@@ -275,22 +289,27 @@ jobs:
           fi
 
       - name: Terraform Apply
+        working-directory: kubernetes
         run: terraform apply -auto-approve -input=false tfplan
 
       - name: Terraform Output
         id: terraform-output
+        working-directory: kubernetes
         run: |
-          echo "eks_endpoint=$(terraform output -raw eks_cluster_endpoint)" >> $GITHUB_OUTPUT
-          echo "eks_cluster=$(terraform output -raw eks_cluster_name)" >> $GITHUB_OUTPUT
-          echo "vpc_id=$(terraform output -raw vpc_id)" >> $GITHUB_OUTPUT
+          echo "argocd_namespace=$(terraform output -raw argocd_namespace)" >> $GITHUB_OUTPUT
+          echo "argocd_server_url=$(terraform output -raw argocd_server_url)" >> $GITHUB_OUTPUT
 
       - name: Summary
         run: |
-          echo "## Deployment Complete! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "## Kubernetes Deployment Complete! 🚀" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Infrastructure Details" >> $GITHUB_STEP_SUMMARY
-          echo "- **EKS Cluster**: ${{ steps.terraform-output.outputs.eks_cluster }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **EKS Endpoint**: ${{ steps.terraform-output.outputs.eks_endpoint }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **VPC ID**: ${{ steps.terraform-output.outputs.vpc_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Installed Components" >> $GITHUB_STEP_SUMMARY
+          echo "- **ArgoCD**: Deployed in namespace \`${{ steps.terraform-output.outputs.argocd_namespace }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **ArgoCD URL**: ${{ steps.terraform-output.outputs.argocd_server_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **AWS Load Balancer Controller**: Installed" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Configure kubectl with: \`aws eks update-kubeconfig --region \$AWS_REGION --name ${{ steps.terraform-output.outputs.eks_cluster }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "### Access ArgoCD" >> $GITHUB_STEP_SUMMARY
+          echo "Get initial admin password:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "kubectl -n ${{ steps.terraform-output.outputs.argocd_namespace }} get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
