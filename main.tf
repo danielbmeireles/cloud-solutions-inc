@@ -45,10 +45,6 @@ module "eks" {
   ebs_csi_addon_version    = var.ebs_csi_addon_version
   efs_csi_addon_version    = var.efs_csi_addon_version
 
-  # AWS Load Balancer Controller
-  install_aws_load_balancer_controller       = var.install_aws_load_balancer_controller
-  aws_load_balancer_controller_chart_version = var.aws_load_balancer_controller_chart_version
-
   # KMS encryption keys
   eks_kms_key_arn = module.kms.eks_key_arn
   ebs_kms_key_arn = module.kms.ebs_key_arn
@@ -83,20 +79,4 @@ module "cloudwatch" {
   project_name     = var.project_name
   eks_cluster_name = module.eks.cluster_name
   alarm_email      = var.alarm_email
-}
-
-# ArgoCD Module
-module "argocd" {
-  source = "./modules/argocd"
-
-  namespace            = "argocd"
-  argocd_chart_version = var.argocd_chart_version
-  argocd_domain        = var.argocd_domain
-  server_insecure      = var.argocd_server_insecure
-  server_service_type  = var.argocd_server_service_type
-  ingress_enabled      = var.argocd_ingress_enabled
-  ingress_class_name   = var.argocd_ingress_class_name
-  ingress_annotations  = var.argocd_ingress_annotations
-
-  depends_on = [module.eks]
 }

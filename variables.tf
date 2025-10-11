@@ -115,19 +115,6 @@ variable "efs_csi_addon_version" {
   default     = "v2.1.12-eksbuild.1"
 }
 
-# AWS Load Balancer Controller Configuration
-variable "install_aws_load_balancer_controller" {
-  description = "Whether to install AWS Load Balancer Controller via Helm"
-  type        = bool
-  default     = true
-}
-
-variable "aws_load_balancer_controller_chart_version" {
-  description = "AWS Load Balancer Controller Helm chart version"
-  type        = string
-  default     = "1.14.0"
-}
-
 # Monitoring
 variable "alarm_email" {
   description = "Email address for CloudWatch alarms"
@@ -135,48 +122,3 @@ variable "alarm_email" {
   default     = ""
 }
 
-# ArgoCD Configuration
-variable "argocd_chart_version" {
-  description = "ArgoCD Helm chart version"
-  type        = string
-  default     = "8.5.10"
-}
-
-variable "argocd_domain" {
-  description = "Domain name for ArgoCD (used for ingress)"
-  type        = string
-  default     = "argocd.local"
-}
-
-variable "argocd_server_insecure" {
-  description = "Run ArgoCD server without TLS (useful for development)"
-  type        = bool
-  default     = true
-}
-
-variable "argocd_server_service_type" {
-  description = "Service type for ArgoCD server (ClusterIP, LoadBalancer, or NodePort)"
-  type        = string
-  default     = "ClusterIP"
-}
-
-variable "argocd_ingress_enabled" {
-  description = "Enable ingress for ArgoCD server"
-  type        = bool
-  default     = true
-}
-
-variable "argocd_ingress_class_name" {
-  description = "Ingress class name for ArgoCD"
-  type        = string
-  default     = "alb"
-}
-
-variable "argocd_ingress_annotations" {
-  description = "Annotations for ArgoCD ingress"
-  type        = map(string)
-  default = {
-    "alb.ingress.kubernetes.io/scheme"      = "internet-facing"
-    "alb.ingress.kubernetes.io/target-type" = "ip"
-  }
-}
