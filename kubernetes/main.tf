@@ -93,6 +93,32 @@ resource "helm_release" "aws_load_balancer_controller" {
   ]
 }
 
+# Wait for AWS Load Balancer Controller to be ready
+resource "null_resource" "wait_for_alb_controller" {
+  count = var.install_aws_load_balancer_controller ? 1 : 0
+
+  provisioner "local-exec" {
+    command = <<-EOT
+      echo "Waiting for AWS Load Balancer Controller to be ready..."
+      kubectl wait --for=condition=Available --timeout=300s deployment/aws-load-balancer-controller -n kube-system
+
+      echo "Waiting for webhook service to have endpoints..."
+      for i in {1..30}; do
+        if kubectl get endpoints controller-webhook-service -n kube-system &>/dev/null && \
+           [ $(kubectl get endpoints controller-webhook-service -n kube-system -o jsonpath='{.subsets[*].addresses[*].ip}' | wc -w) -gt 0 ]; then
+          echo "Webhook service has endpoints"
+          exit 0
+        fi
+        echo "Waiting for webhook endpoints... ($i/30)"
+        sleep 10
+      done
+      echo "Warning: Webhook endpoints not ready, continuing anyway..."
+    EOT
+  }
+
+  depends_on = [helm_release.aws_load_balancer_controller]
+}
+
 # cert-manager for SSL/TLS certificate management
 resource "helm_release" "cert_manager" {
   name             = "cert-manager"
@@ -113,6 +139,8 @@ resource "helm_release" "cert_manager" {
       }
     })
   ]
+
+  depends_on = [null_resource.wait_for_alb_controller]
 }
 
 # Let's Encrypt ClusterIssuers (apply after cert-manager is ready)
