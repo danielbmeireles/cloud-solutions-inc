@@ -23,11 +23,11 @@ argocd_ingress_annotations = {
   "alb.ingress.kubernetes.io/scheme"      = "internet-facing"
   "alb.ingress.kubernetes.io/target-type" = "ip"
   # Force HTTPS/SSL
-  "alb.ingress.kubernetes.io/listen-ports"    = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
-  "alb.ingress.kubernetes.io/ssl-redirect"    = "443"
+  "alb.ingress.kubernetes.io/listen-ports"     = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
+  "alb.ingress.kubernetes.io/ssl-redirect"     = "443"
   "alb.ingress.kubernetes.io/backend-protocol" = "HTTPS"
 }
 
 # SSL/TLS Certificate via cert-manager
-argocd_enable_certificate  = true
-argocd_certificate_issuer  = "letsencrypt-prod"
+argocd_enable_certificate = true
+argocd_certificate_issuer = "letsencrypt-prod"
