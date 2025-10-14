@@ -212,11 +212,11 @@ jobs:
           FMT_OUTCOME: ${{ needs.terraform-validate.outputs.fmt_outcome }}
           INIT_OUTCOME: ${{ steps.init.outcome }}
           PLAN_OUTCOME: ${{ steps.plan.outcome }}
-          PLAN: ${{ steps.plan.outputs.stdout }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WORKFLOW_TYPE: infrastructure
         run: bash .github/scripts/pr-comment.sh
 
       - name: Terraform Plan Status
