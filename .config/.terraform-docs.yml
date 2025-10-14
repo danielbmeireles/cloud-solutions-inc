@@ -3,7 +3,7 @@ formatter: "markdown table"
 version: ">=0.20.0"
 
 output:
-  file: docs/TERRAFORM.md
+  file: TERRAFORM.md
   mode: inject
   template: |-
       <!-- BEGIN_TF_DOCS -->

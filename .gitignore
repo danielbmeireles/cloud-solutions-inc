@@ -30,3 +30,6 @@ Thumbs.db
 # Backup files
 *.bak
 *.backup
+
+# AI tools
+**/.claude/*
