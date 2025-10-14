@@ -46,6 +46,18 @@ variable "ingress_annotations" {
   default     = {}
 }
 
+variable "enable_certificate" {
+  description = "Enable automatic SSL/TLS certificate via cert-manager"
+  type        = bool
+  default     = false
+}
+
+variable "certificate_issuer" {
+  description = "cert-manager ClusterIssuer name for certificate generation"
+  type        = string
+  default     = "letsencrypt-prod"
+}
+
 variable "controller_resources" {
   description = "Resource limits for ArgoCD controller"
   type = object({
@@ -64,8 +76,8 @@ variable "controller_resources" {
       memory = "512Mi"
     }
     requests = {
-      cpu    = "250m"
-      memory = "256Mi"
+      cpu    = "100m"
+      memory = "128Mi"
     }
   }
 }
@@ -88,8 +100,8 @@ variable "repo_server_resources" {
       memory = "512Mi"
     }
     requests = {
-      cpu    = "250m"
-      memory = "256Mi"
+      cpu    = "100m"
+      memory = "128Mi"
     }
   }
 }
