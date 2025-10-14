@@ -206,18 +206,23 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           infracost breakdown --path tfplan.json --format table --show-skipped >> $GITHUB_STEP_SUMMARY
 
-      - name: Comment PR
+      - name: Generate PR Comment
         if: github.event_name == 'pull_request'
         env:
           FMT_OUTCOME: ${{ needs.terraform-validate.outputs.fmt_outcome }}
           INIT_OUTCOME: ${{ steps.init.outcome }}
           PLAN_OUTCOME: ${{ steps.plan.outcome }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WORKFLOW_TYPE: infrastructure
         run: bash .github/scripts/pr-comment.sh
+
+      - name: Post/Update PR Comment
+        if: github.event_name == 'pull_request'
+        uses: mshick/add-pr-comment@v2
+        with:
+          message-id: terraform-deployment-preview
+          message-path: /tmp/pr-comment.txt
 
       - name: Terraform Plan Status
         if: steps.plan.outcome == 'failure'

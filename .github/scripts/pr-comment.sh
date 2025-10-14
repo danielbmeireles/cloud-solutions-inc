@@ -59,5 +59,6 @@ ${PLAN}
 EOF
 )
 
-# Post comment using gh CLI
-gh pr comment "$PR_NUMBER" --body "$COMMENT_BODY"
+# Output the comment body to a file for the GitHub Action to use
+echo "$COMMENT_BODY" > /tmp/pr-comment.txt
+echo "Comment body saved to /tmp/pr-comment.txt"
