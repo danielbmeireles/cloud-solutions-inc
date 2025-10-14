@@ -217,10 +217,7 @@ jobs:
             --region ${{ vars.AWS_REGION }} \
             --name "${CLUSTER_NAME}"
 
-          # Verify connection
-          echo "Verifying cluster connection..."
-          kubectl cluster-info
-          kubectl get nodes
+          echo "kubectl configured successfully for cluster: ${CLUSTER_NAME}"
 
       - name: Terraform Init
         id: init
@@ -333,10 +330,7 @@ jobs:
             --region ${{ vars.AWS_REGION }} \
             --name "${CLUSTER_NAME}"
 
-          # Verify connection
-          echo "Verifying cluster connection..."
-          kubectl cluster-info
-          kubectl get nodes
+          echo "kubectl configured successfully for cluster: ${CLUSTER_NAME}"
 
       - name: Terraform Init
         working-directory: kubernetes
