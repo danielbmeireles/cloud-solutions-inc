@@ -198,7 +198,37 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           tf-summarize -md tfplan.json >> $GITHUB_STEP_SUMMARY
 
-      - name: Generate Cost Estimate
+      - name: Generate Infracost Baseline
+        if: steps.plan.outcome == 'success'
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+        run: |
+          git checkout main
+          terraform init -backend-config="environments/${ENVIRONMENT}/tfbackend.hcl"
+          if [ -f "environments/${ENVIRONMENT}/terraform.tfvars" ]; then
+            terraform plan -var-file="environments/${ENVIRONMENT}/terraform.tfvars" -out=tfplan-main.binary
+          else
+            terraform plan -out=tfplan-main.binary
+          fi
+          terraform show -json tfplan-main.binary > tfplan-main.json
+          infracost breakdown --path tfplan-main.json --format json --out-file infracost-base.json
+
+      - name: Generate Infracost Diff
+        if: steps.plan.outcome == 'success'
+        run: |
+          git checkout ${{ github.head_ref }}
+          infracost diff --path tfplan.json --format json --compare-to infracost-base.json --out-file infracost.json
+
+      - name: Post Infracost Comment
+        if: steps.plan.outcome == 'success'
+        run: |
+          infracost comment github --path infracost.json \
+            --repo ${{ github.repository }} \
+            --pull-request ${{ github.event.pull_request.number }} \
+            --github-token ${{ secrets.GITHUB_TOKEN }} \
+            --behavior update
+
+      - name: Generate Cost Summary
         if: steps.plan.outcome == 'success'
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
