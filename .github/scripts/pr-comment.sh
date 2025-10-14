@@ -22,6 +22,13 @@ get_status_badge() {
   esac
 }
 
+# Read tf-summarize output if available
+if [ -f "/tmp/tf-summary.md" ]; then
+  TF_SUMMARY=$(cat /tmp/tf-summary.md)
+else
+  TF_SUMMARY="*Summary not available*"
+fi
+
 # Determine workflow type and set appropriate title
 if [ "${WORKFLOW_TYPE}" == "kubernetes" ]; then
   WORKFLOW_TITLE="☸️ Kubernetes Deployment Preview"
@@ -44,6 +51,12 @@ COMMENT_BODY=$(cat <<EOF
 | 📋 **Plan** | $(get_status_emoji "$PLAN_OUTCOME") | $(get_status_badge "$PLAN_OUTCOME") |
 
 ---
+
+<details><summary><b>📊 View Terraform Plan Summary</b></summary>
+
+${TF_SUMMARY}
+
+</details>
 
 <details><summary><b>📖 View Terraform Plan Details</b></summary>
 

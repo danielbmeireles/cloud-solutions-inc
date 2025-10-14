@@ -198,6 +198,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           tf-summarize -md tfplan.json >> $GITHUB_STEP_SUMMARY
 
+          # Save tf-summarize output for PR comment
+          tf-summarize -md tfplan.json > /tmp/tf-summary.md
+
       - name: Generate Infracost JSON
         if: steps.plan.outcome == 'success'
         run: |
