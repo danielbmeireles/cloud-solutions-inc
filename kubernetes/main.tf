@@ -116,57 +116,62 @@ resource "helm_release" "cert_manager" {
 }
 
 # Let's Encrypt ClusterIssuers (apply after cert-manager is ready)
-resource "kubernetes_manifest" "letsencrypt_prod" {
-  manifest = {
-    apiVersion = "cert-manager.io/v1"
-    kind       = "ClusterIssuer"
-    metadata = {
-      name = "letsencrypt-prod"
-    }
-    spec = {
-      acme = {
-        server = "https://acme-v02.api.letsencrypt.org/directory"
-        email  = "cloud-solutions@meireles.dev"
-        privateKeySecretRef = {
-          name = "letsencrypt-prod"
-        }
-        solvers = [{
-          http01 = {
-            ingress = {
-              ingressClassName = "alb"
-            }
-          }
-        }]
-      }
-    }
+# Using null_resource to apply via kubectl after CRDs are installed
+resource "null_resource" "letsencrypt_clusterissuers" {
+  # Trigger re-creation when cert-manager version changes
+  triggers = {
+    cert_manager_version = helm_release.cert_manager.version
   }
 
-  depends_on = [helm_release.cert_manager]
-}
+  provisioner "local-exec" {
+    command = <<-EOT
+      # Wait for cert-manager to be ready
+      echo "Waiting for cert-manager to be ready..."
+      kubectl wait --for=condition=Available --timeout=300s deployment/cert-manager -n cert-manager
+      kubectl wait --for=condition=Available --timeout=300s deployment/cert-manager-webhook -n cert-manager
 
-resource "kubernetes_manifest" "letsencrypt_staging" {
-  manifest = {
-    apiVersion = "cert-manager.io/v1"
-    kind       = "ClusterIssuer"
-    metadata = {
-      name = "letsencrypt-staging"
-    }
-    spec = {
-      acme = {
-        server = "https://acme-staging-v02.api.letsencrypt.org/directory"
-        email  = "cloud-solutions@meireles.dev"
-        privateKeySecretRef = {
-          name = "letsencrypt-staging"
-        }
-        solvers = [{
-          http01 = {
-            ingress = {
-              ingressClassName = "alb"
-            }
-          }
-        }]
-      }
-    }
+      # Apply ClusterIssuers
+      echo "Creating Let's Encrypt ClusterIssuers..."
+      kubectl apply -f - <<EOF
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: cloud-solutions@meireles.dev
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          ingressClassName: alb
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: cloud-solutions@meireles.dev
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    solvers:
+    - http01:
+        ingress:
+          ingressClassName: alb
+EOF
+    EOT
+  }
+
+  # Clean up on destroy
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      kubectl delete clusterissuer letsencrypt-prod letsencrypt-staging --ignore-not-found=true
+    EOT
   }
 
   depends_on = [helm_release.cert_manager]
@@ -189,6 +194,6 @@ module "argocd" {
 
   depends_on = [
     helm_release.cert_manager,
-    kubernetes_manifest.letsencrypt_prod
+    null_resource.letsencrypt_clusterissuers
   ]
 }

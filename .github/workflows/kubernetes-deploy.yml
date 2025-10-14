@@ -187,6 +187,38 @@ jobs:
         run: |
           wget -q -O - https://github.com/dineshba/tf-summarize/releases/latest/download/tf-summarize_linux_amd64.tar.gz | sudo tar -xz -C /usr/local/bin/ tf-summarize
 
+      - name: Get EKS cluster name from infrastructure state
+        id: eks-info
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+        run: |
+          # Initialize terraform to read remote state
+          cd kubernetes
+          terraform init -backend-config="environments/${ENVIRONMENT}/tfbackend.hcl" -backend=true
+
+          # Get cluster name from remote state
+          CLUSTER_NAME=$(terraform output -state=terraform.tfstate -raw eks_cluster_name 2>/dev/null || \
+                        terraform console <<< "data.terraform_remote_state.infra.outputs.eks_cluster_name" | tr -d '"')
+
+          echo "cluster_name=${CLUSTER_NAME}" >> $GITHUB_OUTPUT
+          echo "EKS Cluster: ${CLUSTER_NAME}"
+
+      - name: Configure EKS access
+        env:
+          CLUSTER_NAME: ${{ steps.eks-info.outputs.cluster_name }}
+        run: |
+          echo "Configuring kubectl access to EKS cluster: ${CLUSTER_NAME}"
+
+          # Update kubeconfig
+          aws eks update-kubeconfig \
+            --region ${{ vars.AWS_REGION }} \
+            --name "${CLUSTER_NAME}"
+
+          # Verify connection
+          echo "Verifying cluster connection..."
+          kubectl cluster-info
+          kubectl get nodes
+
       - name: Terraform Init
         id: init
         working-directory: kubernetes
@@ -267,6 +299,38 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Get EKS cluster name from infrastructure state
+        id: eks-info
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+        run: |
+          # Initialize terraform to read remote state
+          cd kubernetes
+          terraform init -backend-config="environments/${ENVIRONMENT}/tfbackend.hcl" -backend=true
+
+          # Get cluster name from remote state
+          CLUSTER_NAME=$(terraform output -state=terraform.tfstate -raw eks_cluster_name 2>/dev/null || \
+                        terraform console <<< "data.terraform_remote_state.infra.outputs.eks_cluster_name" | tr -d '"')
+
+          echo "cluster_name=${CLUSTER_NAME}" >> $GITHUB_OUTPUT
+          echo "EKS Cluster: ${CLUSTER_NAME}"
+
+      - name: Configure EKS access
+        env:
+          CLUSTER_NAME: ${{ steps.eks-info.outputs.cluster_name }}
+        run: |
+          echo "Configuring kubectl access to EKS cluster: ${CLUSTER_NAME}"
+
+          # Update kubeconfig
+          aws eks update-kubeconfig \
+            --region ${{ vars.AWS_REGION }} \
+            --name "${CLUSTER_NAME}"
+
+          # Verify connection
+          echo "Verifying cluster connection..."
+          kubectl cluster-info
+          kubectl get nodes
 
       - name: Terraform Init
         working-directory: kubernetes
