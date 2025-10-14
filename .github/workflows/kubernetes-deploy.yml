@@ -193,8 +193,8 @@ jobs:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
           PROJECT_NAME: cloud-solutions
         run: |
-          # Discover EKS cluster by naming convention
-          CLUSTER_NAME="${PROJECT_NAME}-${ENVIRONMENT}-eks"
+          # Discover EKS cluster by naming convention: {project_name}-{environment}-cluster
+          CLUSTER_NAME="${PROJECT_NAME}-${ENVIRONMENT}-cluster"
 
           # Verify cluster exists
           if ! aws eks describe-cluster --name "$CLUSTER_NAME" --region ${{ vars.AWS_REGION }} > /dev/null 2>&1; then
@@ -309,8 +309,8 @@ jobs:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
           PROJECT_NAME: cloud-solutions
         run: |
-          # Discover EKS cluster by naming convention
-          CLUSTER_NAME="${PROJECT_NAME}-${ENVIRONMENT}-eks"
+          # Discover EKS cluster by naming convention: {project_name}-{environment}-cluster
+          CLUSTER_NAME="${PROJECT_NAME}-${ENVIRONMENT}-cluster"
 
           # Verify cluster exists
           if ! aws eks describe-cluster --name "$CLUSTER_NAME" --region ${{ vars.AWS_REGION }} > /dev/null 2>&1; then
