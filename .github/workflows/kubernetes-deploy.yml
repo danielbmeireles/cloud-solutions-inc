@@ -212,6 +212,47 @@ jobs:
         run: |
           echo "Configuring kubectl access to EKS cluster: ${CLUSTER_NAME}"
 
+          # Get the current IAM role ARN being used by GitHub Actions
+          CALLER_IDENTITY=$(aws sts get-caller-identity)
+          ROLE_ARN=$(echo "$CALLER_IDENTITY" | jq -r '.Arn' | sed 's/:sts:/:iam:/' | sed 's/:assumed-role\//:role\//' | cut -d'/' -f1-2)
+
+          echo "GitHub Actions Role ARN: ${ROLE_ARN}"
+
+          # Check if access entry exists
+          if ! aws eks describe-access-entry \
+              --cluster-name "$CLUSTER_NAME" \
+              --principal-arn "$ROLE_ARN" \
+              --region ${{ vars.AWS_REGION }} 2>/dev/null; then
+
+            echo "Creating EKS access entry for GitHub Actions role..."
+            aws eks create-access-entry \
+              --cluster-name "$CLUSTER_NAME" \
+              --principal-arn "$ROLE_ARN" \
+              --type STANDARD \
+              --region ${{ vars.AWS_REGION }}
+          else
+            echo "Access entry already exists"
+          fi
+
+          # Associate cluster admin policy
+          POLICY_ARN="arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+          if ! aws eks list-associated-access-policies \
+              --cluster-name "$CLUSTER_NAME" \
+              --principal-arn "$ROLE_ARN" \
+              --region ${{ vars.AWS_REGION }} 2>/dev/null | grep -q "$POLICY_ARN"; then
+
+            echo "Associating cluster admin policy..."
+            aws eks associate-access-policy \
+              --cluster-name "$CLUSTER_NAME" \
+              --principal-arn "$ROLE_ARN" \
+              --policy-arn "$POLICY_ARN" \
+              --access-scope type=cluster \
+              --region ${{ vars.AWS_REGION }}
+          else
+            echo "Policy already associated"
+          fi
+
           # Update kubeconfig
           aws eks update-kubeconfig \
             --region ${{ vars.AWS_REGION }} \
@@ -324,6 +365,47 @@ jobs:
           CLUSTER_NAME: ${{ steps.eks-info.outputs.cluster_name }}
         run: |
           echo "Configuring kubectl access to EKS cluster: ${CLUSTER_NAME}"
+
+          # Get the current IAM role ARN being used by GitHub Actions
+          CALLER_IDENTITY=$(aws sts get-caller-identity)
+          ROLE_ARN=$(echo "$CALLER_IDENTITY" | jq -r '.Arn' | sed 's/:sts:/:iam:/' | sed 's/:assumed-role\//:role\//' | cut -d'/' -f1-2)
+
+          echo "GitHub Actions Role ARN: ${ROLE_ARN}"
+
+          # Check if access entry exists
+          if ! aws eks describe-access-entry \
+              --cluster-name "$CLUSTER_NAME" \
+              --principal-arn "$ROLE_ARN" \
+              --region ${{ vars.AWS_REGION }} 2>/dev/null; then
+
+            echo "Creating EKS access entry for GitHub Actions role..."
+            aws eks create-access-entry \
+              --cluster-name "$CLUSTER_NAME" \
+              --principal-arn "$ROLE_ARN" \
+              --type STANDARD \
+              --region ${{ vars.AWS_REGION }}
+          else
+            echo "Access entry already exists"
+          fi
+
+          # Associate cluster admin policy
+          POLICY_ARN="arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+          if ! aws eks list-associated-access-policies \
+              --cluster-name "$CLUSTER_NAME" \
+              --principal-arn "$ROLE_ARN" \
+              --region ${{ vars.AWS_REGION }} 2>/dev/null | grep -q "$POLICY_ARN"; then
+
+            echo "Associating cluster admin policy..."
+            aws eks associate-access-policy \
+              --cluster-name "$CLUSTER_NAME" \
+              --principal-arn "$ROLE_ARN" \
+              --policy-arn "$POLICY_ARN" \
+              --access-scope type=cluster \
+              --region ${{ vars.AWS_REGION }}
+          else
+            echo "Policy already associated"
+          fi
 
           # Update kubeconfig
           aws eks update-kubeconfig \
