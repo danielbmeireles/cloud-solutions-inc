@@ -101,6 +101,12 @@ variable "ebs_csi_addon_version" {
   default     = "v1.31.0-eksbuild.1"
 }
 
+variable "efs_csi_addon_version" {
+  description = "Version of the EFS CSI driver addon"
+  type        = string
+  default     = "v2.1.12-eksbuild.1"
+}
+
 variable "eks_kms_key_arn" {
   description = "ARN of the KMS key for EKS secrets encryption"
   type        = string

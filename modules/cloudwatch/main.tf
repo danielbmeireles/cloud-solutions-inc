@@ -38,7 +38,7 @@ resource "aws_cloudwatch_dashboard" "main" {
             [".", "cluster_node_count", ".", ".", { stat = "Average", label = "Total Nodes" }]
           ]
           period = 300
-          region = data.aws_region.current.name
+          region = data.aws_region.current.region
           title  = "EKS Cluster Metrics"
           stat   = "Average"
           yAxis = {
@@ -55,7 +55,7 @@ resource "aws_cloudwatch_dashboard" "main" {
             ["AWS/Logs", "IncomingLogEvents", "LogGroupName", aws_cloudwatch_log_group.main.name, { stat = "Sum", label = "Log Events" }]
           ]
           period = 300
-          region = data.aws_region.current.name
+          region = data.aws_region.current.region
           title  = "Application Logs"
           stat   = "Sum"
           yAxis = {
@@ -68,6 +68,3 @@ resource "aws_cloudwatch_dashboard" "main" {
     ]
   })
 }
-
-# Data source to get current AWS region
-data "aws_region" "current" {}

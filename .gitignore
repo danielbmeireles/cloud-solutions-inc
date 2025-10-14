@@ -30,7 +30,3 @@ Thumbs.db
 # Backup files
 *.bak
 *.backup
-
-# Miscellaneous
-rover
-*tfplan

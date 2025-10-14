@@ -43,6 +43,7 @@ module "eks" {
   coredns_addon_version    = var.coredns_addon_version
   kube_proxy_addon_version = var.kube_proxy_addon_version
   ebs_csi_addon_version    = var.ebs_csi_addon_version
+  efs_csi_addon_version    = var.efs_csi_addon_version
 
   # KMS encryption keys
   eks_kms_key_arn = module.kms.eks_key_arn
@@ -59,9 +60,9 @@ module "alb" {
   eks_cluster_name = module.eks.cluster_name
 }
 
-# Storage Module
-module "storage" {
-  source = "./modules/storage"
+# EFS Module
+module "efs" {
+  source = "./modules/efs"
 
   environment                = var.environment
   project_name               = var.project_name
@@ -70,9 +71,9 @@ module "storage" {
   eks_node_security_group_id = module.eks.cluster_security_group_id
 }
 
-# Monitoring Module (EKS-focused)
-module "monitoring" {
-  source = "./modules/monitoring"
+# CloudWatch Module
+module "cloudwatch" {
+  source = "./modules/cloudwatch"
 
   environment      = var.environment
   project_name     = var.project_name

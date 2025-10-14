@@ -1,0 +1,17 @@
+apiVersion: v2
+name: aws-load-balancer-controller
+description: AWS Load Balancer Controller with IRSA pre-configured
+type: application
+version: 1.0.0
+appVersion: "v2.11.0"
+
+# Use official AWS chart as dependency
+dependencies:
+  - name: aws-load-balancer-controller
+    version: "1.14.0"
+    repository: "https://aws.github.io/eks-charts"
+    alias: controller
+
+maintainers:
+  - name: Cloud Solutions Inc
+    email: devops@cloud-solutions.example.com

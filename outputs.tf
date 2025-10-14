@@ -36,6 +36,17 @@ output "eks_oidc_provider_arn" {
   sensitive   = true
 }
 
+output "eks_oidc_provider" {
+  description = "OIDC provider URL without https://"
+  value       = module.eks.oidc_provider
+}
+
+output "eks_cluster_certificate_authority" {
+  description = "Base64 encoded certificate data for the cluster"
+  value       = module.eks.cluster_certificate_authority_data
+  sensitive   = true
+}
+
 output "eks_node_group_id" {
   description = "ID of the EKS node group"
   value       = module.eks.node_group_id
@@ -47,37 +58,26 @@ output "eks_node_group_role_arn" {
   sensitive   = true
 }
 
-output "aws_load_balancer_controller_role_arn" {
-  description = "IAM role ARN for AWS Load Balancer Controller"
-  value       = module.eks.aws_load_balancer_controller_role_arn
-  sensitive   = true
-}
-
 output "ebs_csi_driver_role_arn" {
   description = "IAM role ARN for EBS CSI Driver"
   value       = module.eks.ebs_csi_driver_role_arn
   sensitive   = true
 }
 
-output "s3_bucket_name" {
-  description = "Name of the S3 bucket"
-  value       = module.storage.s3_bucket_name
+output "efs_csi_driver_role_arn" {
+  description = "IAM role ARN for EFS CSI Driver"
+  value       = module.eks.efs_csi_driver_role_arn
+  sensitive   = true
 }
 
 output "efs_id" {
   description = "ID of the EFS file system"
-  value       = module.storage.efs_id
+  value       = module.efs.efs_id
 }
 
 output "cloudwatch_log_group" {
   description = "Name of the CloudWatch log group"
-  value       = module.monitoring.log_group_name
-}
-
-output "kubeconfig" {
-  description = "kubectl config for accessing the EKS cluster"
-  value       = module.eks.kubeconfig
-  sensitive   = true
+  value       = module.cloudwatch.log_group_name
 }
 
 output "configure_kubectl" {

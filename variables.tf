@@ -109,9 +109,16 @@ variable "ebs_csi_addon_version" {
   default     = "v1.31.0-eksbuild.1"
 }
 
+variable "efs_csi_addon_version" {
+  description = "Version of the EFS CSI driver addon"
+  type        = string
+  default     = "v2.1.12-eksbuild.1"
+}
+
 # Monitoring
 variable "alarm_email" {
   description = "Email address for CloudWatch alarms"
   type        = string
   default     = ""
 }
+

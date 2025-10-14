@@ -22,9 +22,18 @@ get_status_badge() {
   esac
 }
 
+# Determine workflow type and set appropriate title
+if [ "${WORKFLOW_TYPE}" == "kubernetes" ]; then
+  WORKFLOW_TITLE="☸️ Kubernetes Deployment Preview"
+  WORKFLOW_EMOJI="☸️"
+else
+  WORKFLOW_TITLE="🏗️ Terraform Deployment Preview"
+  WORKFLOW_EMOJI="🏗️"
+fi
+
 # Build the comment body
 COMMENT_BODY=$(cat <<EOF
-## 🚀 Terraform Deployment Preview
+## ${WORKFLOW_TITLE}
 
 ### Validation Results
 
@@ -46,7 +55,7 @@ ${PLAN}
 
 ---
 
-<sub>👤 Triggered by **@${GITHUB_ACTOR}** | 🔄 Action: \`${GITHUB_EVENT_NAME}\` | ⏰ $(date -u)</sub>
+<sub>👤 Triggered by **@${GITHUB_ACTOR}** | 🔄 Action: \`${GITHUB_EVENT_NAME}\` | ${WORKFLOW_EMOJI} Workflow: \`${WORKFLOW_TYPE:-terraform}\` | ⏰ $(date -u)</sub>
 EOF
 )
 

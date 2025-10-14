@@ -1,0 +1,461 @@
+name: Kubernetes Deploy
+
+on:
+  workflow_run:
+    workflows: ["Terraform Deploy"]
+    types:
+      - completed
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "kubernetes/**"
+      - ".github/workflows/kubernetes-deploy.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+        default: development
+
+env:
+  TF_VERSION: ${{ vars.TF_VERSION }}
+
+jobs:
+  determine-environment:
+    name: Determine Environment
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine environment
+        id: set-env
+        run: |
+          # Priority 1: Manual workflow dispatch
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Priority 2: PR labels (deploy:development, deploy:staging, deploy:production)
+          # PRs without labels only run plan (no apply)
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            LABELS='${{ toJson(github.event.pull_request.labels.*.name) }}'
+            if echo "$LABELS" | grep -q "deploy:production"; then
+              echo "environment=production" >> $GITHUB_OUTPUT
+              exit 0
+            elif echo "$LABELS" | grep -q "deploy:staging"; then
+              echo "environment=staging" >> $GITHUB_OUTPUT
+              exit 0
+            elif echo "$LABELS" | grep -q "deploy:development"; then
+              echo "environment=development" >> $GITHUB_OUTPUT
+              exit 0
+            else
+              echo "::warning::No deployment label found on PR. Only 'terraform plan' will run (no apply)."
+              echo "environment=development" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+          fi
+
+          # Priority 3: Inherit from terraform-deploy workflow
+          if [ "${{ github.event_name }}" == "workflow_run" ]; then
+            HEAD_BRANCH="${{ github.event.workflow_run.head_branch }}"
+            HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+
+            # Check if this was triggered by a push to main
+            if [ "$HEAD_BRANCH" == "main" ]; then
+              # Get all tags pointing to this commit
+              TAGS=$(git tag --points-at "$HEAD_SHA" 2>/dev/null || echo "")
+
+              # If there are tags, use them; otherwise, it's a direct push to main (production)
+              if [ -z "$TAGS" ]; then
+                echo "environment=production" >> $GITHUB_OUTPUT
+                echo "Detected push to main branch → production deployment" >> $GITHUB_STEP_SUMMARY
+                exit 0
+              fi
+
+              # Find the first matching deployment tag
+              for TAG in $TAGS; do
+                if [[ "$TAG" == prd-* ]]; then
+                  echo "environment=production" >> $GITHUB_OUTPUT
+                  echo "Detected production tag: $TAG" >> $GITHUB_STEP_SUMMARY
+                  exit 0
+                elif [[ "$TAG" == stg-* ]]; then
+                  echo "environment=staging" >> $GITHUB_OUTPUT
+                  echo "Detected staging tag: $TAG" >> $GITHUB_STEP_SUMMARY
+                  exit 0
+                elif [[ "$TAG" == dev-* ]]; then
+                  echo "environment=development" >> $GITHUB_OUTPUT
+                  echo "Detected development tag: $TAG" >> $GITHUB_STEP_SUMMARY
+                  exit 0
+                fi
+              done
+
+              # If we got here with a tag that doesn't match our patterns, it's still a main push
+              echo "environment=production" >> $GITHUB_OUTPUT
+              echo "Detected push to main branch → production deployment" >> $GITHUB_STEP_SUMMARY
+              exit 0
+            fi
+
+            echo "::error::Kubernetes deployment blocked: Parent workflow was not triggered by main branch or valid tag."
+            exit 1
+          fi
+
+          # No default - fail if no valid trigger
+          echo "::error::Deployment blocked: Invalid trigger for Kubernetes deployment."
+          exit 1
+
+      - name: Display Selected Environment
+        run: |
+          echo "## Selected Environment: ${{ steps.set-env.outputs.environment }} 🎯" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+
+  terraform-validate:
+    name: Terraform Validate (Kubernetes)
+    runs-on: ubuntu-latest
+    needs: determine-environment
+    outputs:
+      fmt_outcome: ${{ steps.fmt.outcome }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Format Check
+        id: fmt
+        working-directory: kubernetes
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Init
+        working-directory: kubernetes
+        run: terraform init -backend=false
+
+      - name: Terraform Validate
+        working-directory: kubernetes
+        run: terraform validate
+
+  kubernetes-plan:
+    name: Kubernetes Plan (${{ needs.determine-environment.outputs.environment }})
+    runs-on: ubuntu-latest
+    needs: [determine-environment, terraform-validate]
+    if: github.event_name == 'pull_request'
+
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Install tf-summarize
+        run: |
+          wget -q -O - https://github.com/dineshba/tf-summarize/releases/latest/download/tf-summarize_linux_amd64.tar.gz | sudo tar -xz -C /usr/local/bin/ tf-summarize
+
+      - name: Discover EKS cluster
+        id: eks-info
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+          PROJECT_NAME: cloud-solutions
+        run: |
+          # Discover EKS cluster by naming convention: {project_name}-{environment}-cluster
+          CLUSTER_NAME="${PROJECT_NAME}-${ENVIRONMENT}-cluster"
+
+          # Verify cluster exists
+          if ! aws eks describe-cluster --name "$CLUSTER_NAME" --region ${{ vars.AWS_REGION }} > /dev/null 2>&1; then
+            echo "Error: EKS cluster '$CLUSTER_NAME' not found"
+            echo "Make sure the infrastructure has been deployed first"
+            exit 1
+          fi
+
+          echo "cluster_name=${CLUSTER_NAME}" >> $GITHUB_OUTPUT
+          echo "EKS Cluster: ${CLUSTER_NAME}"
+
+      - name: Configure EKS access
+        env:
+          CLUSTER_NAME: ${{ steps.eks-info.outputs.cluster_name }}
+        run: |
+          echo "Configuring kubectl access to EKS cluster: ${CLUSTER_NAME}"
+
+          # Get the current IAM role ARN being used by GitHub Actions
+          CALLER_IDENTITY=$(aws sts get-caller-identity)
+          ROLE_ARN=$(echo "$CALLER_IDENTITY" | jq -r '.Arn' | sed 's/:sts:/:iam:/' | sed 's/:assumed-role\//:role\//' | cut -d'/' -f1-2)
+
+          echo "GitHub Actions Role ARN: ${ROLE_ARN}"
+
+          # Check if access entry exists
+          if ! aws eks describe-access-entry \
+              --cluster-name "$CLUSTER_NAME" \
+              --principal-arn "$ROLE_ARN" \
+              --region ${{ vars.AWS_REGION }} 2>/dev/null; then
+
+            echo "Creating EKS access entry for GitHub Actions role..."
+            aws eks create-access-entry \
+              --cluster-name "$CLUSTER_NAME" \
+              --principal-arn "$ROLE_ARN" \
+              --type STANDARD \
+              --region ${{ vars.AWS_REGION }}
+          else
+            echo "Access entry already exists"
+          fi
+
+          # Associate cluster admin policy
+          POLICY_ARN="arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+          if ! aws eks list-associated-access-policies \
+              --cluster-name "$CLUSTER_NAME" \
+              --principal-arn "$ROLE_ARN" \
+              --region ${{ vars.AWS_REGION }} 2>/dev/null | grep -q "$POLICY_ARN"; then
+
+            echo "Associating cluster admin policy..."
+            aws eks associate-access-policy \
+              --cluster-name "$CLUSTER_NAME" \
+              --principal-arn "$ROLE_ARN" \
+              --policy-arn "$POLICY_ARN" \
+              --access-scope type=cluster \
+              --region ${{ vars.AWS_REGION }}
+          else
+            echo "Policy already associated"
+          fi
+
+          # Update kubeconfig
+          aws eks update-kubeconfig \
+            --region ${{ vars.AWS_REGION }} \
+            --name "${CLUSTER_NAME}"
+
+          echo "kubectl configured successfully for cluster: ${CLUSTER_NAME}"
+
+      - name: Terraform Init
+        id: init
+        working-directory: kubernetes
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+        run: |
+          terraform init \
+            -backend-config="environments/${ENVIRONMENT}/tfbackend.hcl"
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: kubernetes
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+        run: |
+          if [ -f "environments/${ENVIRONMENT}/terraform.tfvars" ]; then
+            terraform plan -var-file="environments/${ENVIRONMENT}/terraform.tfvars" -no-color -input=false -out=tfplan.binary
+          else
+            echo "::warning::No tfvars file found for ${ENVIRONMENT}, running without tfvars"
+            terraform plan -no-color -input=false -out=tfplan.binary
+          fi
+          terraform show -json tfplan.binary > tfplan.json
+        continue-on-error: true
+
+      - name: Generate Plan Summary
+        if: steps.plan.outcome == 'success'
+        working-directory: kubernetes
+        run: |
+          echo "## Kubernetes Plan Summary 📊" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          tf-summarize -md tfplan.json >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment PR
+        if: github.event_name == 'pull_request'
+        env:
+          FMT_OUTCOME: ${{ needs.terraform-validate.outputs.fmt_outcome }}
+          INIT_OUTCOME: ${{ steps.init.outcome }}
+          PLAN_OUTCOME: ${{ steps.plan.outcome }}
+          PLAN: ${{ steps.plan.outputs.stdout }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WORKFLOW_TYPE: kubernetes
+        run: bash .github/scripts/pr-comment.sh
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+  kubernetes-apply:
+    name: Kubernetes Apply (${{ needs.determine-environment.outputs.environment }})
+    runs-on: ubuntu-latest
+    needs: [determine-environment, terraform-validate]
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      github.event_name == 'workflow_dispatch'
+
+    permissions:
+      contents: read
+      id-token: write
+
+    environment:
+      name: ${{ needs.determine-environment.outputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Discover EKS cluster
+        id: eks-info
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+          PROJECT_NAME: cloud-solutions
+        run: |
+          # Discover EKS cluster by naming convention: {project_name}-{environment}-cluster
+          CLUSTER_NAME="${PROJECT_NAME}-${ENVIRONMENT}-cluster"
+
+          # Verify cluster exists
+          if ! aws eks describe-cluster --name "$CLUSTER_NAME" --region ${{ vars.AWS_REGION }} > /dev/null 2>&1; then
+            echo "Error: EKS cluster '$CLUSTER_NAME' not found"
+            echo "Make sure the infrastructure has been deployed first"
+            exit 1
+          fi
+
+          echo "cluster_name=${CLUSTER_NAME}" >> $GITHUB_OUTPUT
+          echo "EKS Cluster: ${CLUSTER_NAME}"
+
+      - name: Configure EKS access
+        env:
+          CLUSTER_NAME: ${{ steps.eks-info.outputs.cluster_name }}
+        run: |
+          echo "Configuring kubectl access to EKS cluster: ${CLUSTER_NAME}"
+
+          # Get the current IAM role ARN being used by GitHub Actions
+          CALLER_IDENTITY=$(aws sts get-caller-identity)
+          ROLE_ARN=$(echo "$CALLER_IDENTITY" | jq -r '.Arn' | sed 's/:sts:/:iam:/' | sed 's/:assumed-role\//:role\//' | cut -d'/' -f1-2)
+
+          echo "GitHub Actions Role ARN: ${ROLE_ARN}"
+
+          # Check if access entry exists
+          if ! aws eks describe-access-entry \
+              --cluster-name "$CLUSTER_NAME" \
+              --principal-arn "$ROLE_ARN" \
+              --region ${{ vars.AWS_REGION }} 2>/dev/null; then
+
+            echo "Creating EKS access entry for GitHub Actions role..."
+            aws eks create-access-entry \
+              --cluster-name "$CLUSTER_NAME" \
+              --principal-arn "$ROLE_ARN" \
+              --type STANDARD \
+              --region ${{ vars.AWS_REGION }}
+          else
+            echo "Access entry already exists"
+          fi
+
+          # Associate cluster admin policy
+          POLICY_ARN="arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+
+          if ! aws eks list-associated-access-policies \
+              --cluster-name "$CLUSTER_NAME" \
+              --principal-arn "$ROLE_ARN" \
+              --region ${{ vars.AWS_REGION }} 2>/dev/null | grep -q "$POLICY_ARN"; then
+
+            echo "Associating cluster admin policy..."
+            aws eks associate-access-policy \
+              --cluster-name "$CLUSTER_NAME" \
+              --principal-arn "$ROLE_ARN" \
+              --policy-arn "$POLICY_ARN" \
+              --access-scope type=cluster \
+              --region ${{ vars.AWS_REGION }}
+          else
+            echo "Policy already associated"
+          fi
+
+          # Update kubeconfig
+          aws eks update-kubeconfig \
+            --region ${{ vars.AWS_REGION }} \
+            --name "${CLUSTER_NAME}"
+
+          echo "kubectl configured successfully for cluster: ${CLUSTER_NAME}"
+
+      - name: Terraform Init
+        working-directory: kubernetes
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+        run: |
+          terraform init \
+            -backend-config="environments/${ENVIRONMENT}/tfbackend.hcl"
+
+      - name: Terraform Plan
+        working-directory: kubernetes
+        env:
+          ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+        run: |
+          if [ -f "environments/${ENVIRONMENT}/terraform.tfvars" ]; then
+            terraform plan -var-file="environments/${ENVIRONMENT}/terraform.tfvars" -input=false -out=tfplan
+          else
+            echo "::warning::No tfvars file found for ${ENVIRONMENT}, running without tfvars"
+            terraform plan -input=false -out=tfplan
+          fi
+
+      - name: Terraform Apply
+        working-directory: kubernetes
+        run: terraform apply -auto-approve -input=false tfplan
+
+      - name: Terraform Output
+        id: terraform-output
+        working-directory: kubernetes
+        run: |
+          echo "argocd_namespace=$(terraform output -raw argocd_namespace)" >> $GITHUB_OUTPUT
+          echo "argocd_server_url=$(terraform output -raw argocd_server_url)" >> $GITHUB_OUTPUT
+
+      - name: Summary
+        run: |
+          echo "## Kubernetes Deployment Complete! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Installed Components" >> $GITHUB_STEP_SUMMARY
+          echo "- **ArgoCD**: Deployed in namespace \`${{ steps.terraform-output.outputs.argocd_namespace }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **ArgoCD URL**: ${{ steps.terraform-output.outputs.argocd_server_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **AWS Load Balancer Controller**: Installed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Access ArgoCD" >> $GITHUB_STEP_SUMMARY
+          echo "Get initial admin password:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "kubectl -n ${{ steps.terraform-output.outputs.argocd_namespace }} get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

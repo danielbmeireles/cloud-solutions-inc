@@ -17,9 +17,9 @@ kubernetes_version = "1.34"
 cluster_enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
 # EKS Node Group Configuration
-node_instance_types = ["t3.small"] # Options: t3.small, t3.medium, t3.large, m5.large, etc.
-capacity_type       = "SPOT"       # Options: ON_DEMAND, SPOT
-node_disk_size      = 20           # Disk size in GiB
+node_instance_types = ["t3.medium"] # Options: t3.small, t3.medium, t3.large, m5.large, etc.
+capacity_type       = "SPOT"        # Options: ON_DEMAND, SPOT
+node_disk_size      = 20            # Disk size in GiB
 
 # Node Group Scaling
 desired_size = 2 # Initial number of nodes
