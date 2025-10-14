@@ -187,18 +187,21 @@ jobs:
         run: |
           wget -q -O - https://github.com/dineshba/tf-summarize/releases/latest/download/tf-summarize_linux_amd64.tar.gz | sudo tar -xz -C /usr/local/bin/ tf-summarize
 
-      - name: Get EKS cluster name from infrastructure state
+      - name: Discover EKS cluster
         id: eks-info
         env:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+          PROJECT_NAME: cloud-solutions
         run: |
-          # Initialize terraform to read remote state
-          cd kubernetes
-          terraform init -backend-config="environments/${ENVIRONMENT}/tfbackend.hcl" -backend=true
+          # Discover EKS cluster by naming convention
+          CLUSTER_NAME="${PROJECT_NAME}-${ENVIRONMENT}-eks"
 
-          # Get cluster name from remote state
-          CLUSTER_NAME=$(terraform output -state=terraform.tfstate -raw eks_cluster_name 2>/dev/null || \
-                        terraform console <<< "data.terraform_remote_state.infra.outputs.eks_cluster_name" | tr -d '"')
+          # Verify cluster exists
+          if ! aws eks describe-cluster --name "$CLUSTER_NAME" --region ${{ vars.AWS_REGION }} > /dev/null 2>&1; then
+            echo "Error: EKS cluster '$CLUSTER_NAME' not found"
+            echo "Make sure the infrastructure has been deployed first"
+            exit 1
+          fi
 
           echo "cluster_name=${CLUSTER_NAME}" >> $GITHUB_OUTPUT
           echo "EKS Cluster: ${CLUSTER_NAME}"
@@ -300,18 +303,21 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - name: Get EKS cluster name from infrastructure state
+      - name: Discover EKS cluster
         id: eks-info
         env:
           ENVIRONMENT: ${{ needs.determine-environment.outputs.environment }}
+          PROJECT_NAME: cloud-solutions
         run: |
-          # Initialize terraform to read remote state
-          cd kubernetes
-          terraform init -backend-config="environments/${ENVIRONMENT}/tfbackend.hcl" -backend=true
+          # Discover EKS cluster by naming convention
+          CLUSTER_NAME="${PROJECT_NAME}-${ENVIRONMENT}-eks"
 
-          # Get cluster name from remote state
-          CLUSTER_NAME=$(terraform output -state=terraform.tfstate -raw eks_cluster_name 2>/dev/null || \
-                        terraform console <<< "data.terraform_remote_state.infra.outputs.eks_cluster_name" | tr -d '"')
+          # Verify cluster exists
+          if ! aws eks describe-cluster --name "$CLUSTER_NAME" --region ${{ vars.AWS_REGION }} > /dev/null 2>&1; then
+            echo "Error: EKS cluster '$CLUSTER_NAME' not found"
+            echo "Make sure the infrastructure has been deployed first"
+            exit 1
+          fi
 
           echo "cluster_name=${CLUSTER_NAME}" >> $GITHUB_OUTPUT
           echo "EKS Cluster: ${CLUSTER_NAME}"
