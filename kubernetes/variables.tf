@@ -80,3 +80,15 @@ variable "argocd_ingress_annotations" {
     "alb.ingress.kubernetes.io/target-type" = "ip"
   }
 }
+
+variable "argocd_enable_certificate" {
+  description = "Enable automatic SSL/TLS certificate for ArgoCD via cert-manager"
+  type        = bool
+  default     = false
+}
+
+variable "argocd_certificate_issuer" {
+  description = "cert-manager ClusterIssuer name for ArgoCD certificate generation"
+  type        = string
+  default     = "letsencrypt-prod"
+}

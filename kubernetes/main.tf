@@ -93,6 +93,85 @@ resource "helm_release" "aws_load_balancer_controller" {
   ]
 }
 
+# cert-manager for SSL/TLS certificate management
+resource "helm_release" "cert_manager" {
+  name             = "cert-manager"
+  repository       = "https://charts.jetstack.io"
+  chart            = "cert-manager"
+  version          = "v1.16.2"
+  namespace        = "cert-manager"
+  create_namespace = true
+
+  timeout = 600
+  atomic  = true
+
+  values = [
+    yamlencode({
+      crds = {
+        enabled = true
+        keep    = true
+      }
+    })
+  ]
+}
+
+# Let's Encrypt ClusterIssuers (apply after cert-manager is ready)
+resource "kubernetes_manifest" "letsencrypt_prod" {
+  manifest = {
+    apiVersion = "cert-manager.io/v1"
+    kind       = "ClusterIssuer"
+    metadata = {
+      name = "letsencrypt-prod"
+    }
+    spec = {
+      acme = {
+        server = "https://acme-v02.api.letsencrypt.org/directory"
+        email  = "cloud-solutions@meireles.dev"
+        privateKeySecretRef = {
+          name = "letsencrypt-prod"
+        }
+        solvers = [{
+          http01 = {
+            ingress = {
+              ingressClassName = "alb"
+            }
+          }
+        }]
+      }
+    }
+  }
+
+  depends_on = [helm_release.cert_manager]
+}
+
+resource "kubernetes_manifest" "letsencrypt_staging" {
+  manifest = {
+    apiVersion = "cert-manager.io/v1"
+    kind       = "ClusterIssuer"
+    metadata = {
+      name = "letsencrypt-staging"
+    }
+    spec = {
+      acme = {
+        server = "https://acme-staging-v02.api.letsencrypt.org/directory"
+        email  = "cloud-solutions@meireles.dev"
+        privateKeySecretRef = {
+          name = "letsencrypt-staging"
+        }
+        solvers = [{
+          http01 = {
+            ingress = {
+              ingressClassName = "alb"
+            }
+          }
+        }]
+      }
+    }
+  }
+
+  depends_on = [helm_release.cert_manager]
+}
+
 # ArgoCD Module
 module "argocd" {
   source = "../modules/argocd"
@@ -105,6 +184,11 @@ module "argocd" {
   ingress_enabled      = var.argocd_ingress_enabled
   ingress_class_name   = var.argocd_ingress_class_name
   ingress_annotations  = var.argocd_ingress_annotations
+  enable_certificate   = var.argocd_enable_certificate
+  certificate_issuer   = var.argocd_certificate_issuer
 
-  depends_on = var.install_aws_load_balancer_controller ? [helm_release.aws_load_balancer_controller[0]] : []
+  depends_on = [
+    helm_release.cert_manager,
+    kubernetes_manifest.letsencrypt_prod
+  ]
 }
