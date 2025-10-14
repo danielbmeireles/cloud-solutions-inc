@@ -22,6 +22,13 @@ get_status_badge() {
   esac
 }
 
+# Read tf-summarize output if available
+if [ -f "/tmp/tf-summary.md" ]; then
+  TF_SUMMARY=$(cat /tmp/tf-summary.md)
+else
+  TF_SUMMARY="*Summary not available*"
+fi
+
 # Determine workflow type and set appropriate title
 if [ "${WORKFLOW_TYPE}" == "kubernetes" ]; then
   WORKFLOW_TITLE="☸️ Kubernetes Deployment Preview"
@@ -45,6 +52,12 @@ COMMENT_BODY=$(cat <<EOF
 
 ---
 
+<details><summary><b>📊 View Terraform Plan Summary</b></summary>
+
+${TF_SUMMARY}
+
+</details>
+
 <details><summary><b>📖 View Terraform Plan Details</b></summary>
 
 \`\`\`terraform
@@ -59,5 +72,6 @@ ${PLAN}
 EOF
 )
 
-# Post comment using gh CLI
-gh pr comment "$PR_NUMBER" --body "$COMMENT_BODY"
+# Output the comment body to a file for the GitHub Action to use
+echo "$COMMENT_BODY" > /tmp/pr-comment.txt
+echo "Comment body saved to /tmp/pr-comment.txt"
