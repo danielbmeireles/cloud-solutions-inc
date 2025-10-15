@@ -61,6 +61,15 @@ Day-to-day operations and maintenance.
 | **[CI/CD Pipeline](CICD.md)**             | Automated deployment workflows          |
 | **[Glossary](GLOSSARY.md)**               | Terms, acronyms, and concepts reference |
 
+### 🧪 Testing & Security
+
+Testing and security validation tools.
+
+| Document                          | Description                               |
+| --------------------------------- | ----------------------------------------- |
+| **[EKS Testing](EKS_TESTING.md)** | EKS module testing with Terraform tests   |
+| **[Security Scanning](CICD.md)**  | Automated Checkov security scans in CI/CD |
+
 ## 📖 Documentation by Topic
 
 ### Authentication & Security
@@ -69,6 +78,12 @@ Day-to-day operations and maintenance.
 - [IRSA Configuration](EKS.md#iam-roles-for-service-accounts-irsa)
 - [Security Best Practices](EKS.md#-security-best-practices)
 - [Post-Deployment Security](ARGOCD.md#-post-deployment-security)
+- [Checkov Security Scanning](CICD.md) - Automated security checks in pipelines
+
+### Testing
+
+- [EKS Module Tests](EKS_TESTING.md) - Local Terraform testing guide
+- [Running Tests](EKS_TESTING.md#-running-tests) - Test execution commands
 
 ### Networking
 
@@ -107,6 +122,8 @@ Day-to-day operations and maintenance.
 | Deploy ArgoCD                         | [ArgoCD Deployment](ARGOCD.md#️-deployment)                         |
 | Set up custom domain with SSL         | [ArgoCD Custom Domain](ARGOCD.md#-custom-domain-setup-with-ssltls) |
 | Configure CI/CD                       | [CI/CD Setup](CICD.md)                                             |
+| Test EKS module locally               | [EKS Testing](EKS_TESTING.md#-running-tests)                       |
+| Run security scans                    | [Security Scanning](CICD.md) or [EKS Testing](EKS_TESTING.md)     |
 | Troubleshoot issues                   | [Troubleshooting Guide](TROUBLESHOOTING.md)                        |
 | Understand Terraform modules          | [Terraform Reference](TERRAFORM.md)                                |
 | Deploy sample app                     | [Examples](EXAMPLES.md)                                            |
