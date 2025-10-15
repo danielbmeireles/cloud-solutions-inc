@@ -238,16 +238,16 @@ terraform output aws_load_balancer_controller_role_arn
 **Important**: Delete resources in reverse order to avoid orphaned AWS resources.
 
 ```bash
-# 1. Delete Kubernetes resources first
+# 1. Delete all Kubernetes-created AWS resources (while controllers are still running)
+kubectl delete ingress --all --all-namespaces
+kubectl delete svc --all --all-namespaces
+kubectl delete pvc --all --all-namespaces
+
+# 2. Delete Kubernetes resources (removes controllers and ArgoCD)
 cd kubernetes
 terraform destroy
 
-# 2. Delete all Kubernetes-created AWS resources
-kubectl delete svc --all --all-namespaces
-kubectl delete ingress --all --all-namespaces
-kubectl delete pvc --all --all-namespaces
-
-# 3. Delete infrastructure
+# 3. Delete infrastructure (removes EKS cluster and VPC)
 cd ..
 terraform destroy
 ```
