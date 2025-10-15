@@ -48,23 +48,23 @@ Production-ready AWS infrastructure for Cloud Solutions Inc., deployed using Ter
 This project uses a **two-pipeline, two-state architecture** for better separation of concerns:
 
 ```
-┌─────────────────────────────────┐
-│  Pipeline 1: terraform-deploy   │
-│  Infrastructure Layer            │
-│  - VPC, EKS, IAM                │
-│  - KMS, EFS, ALB, CloudWatch    │
-│  State: {env}/infra/tfstate      │
-└──────────────┬──────────────────┘
+┌───────────────────────────────────┐
+│  Pipeline 1: terraform-deploy     │
+│  Infrastructure Layer             │
+│  - VPC, EKS, IAM                  │
+│  - KMS, EFS, ALB, CloudWatch      │
+│  State: {env}/infra/tfstate       │
+└──────────────┬───────────────────-┘
                │
                │ triggers on success
                ▼
-┌─────────────────────────────────┐
-│  Pipeline 2: kubernetes-deploy  │
-│  Kubernetes Resources Layer      │
-│  - AWS Load Balancer Controller │
-│  - ArgoCD                        │
-│  State: {env}/kubernetes/tfstate │
-└─────────────────────────────────┘
+┌───────────────────────────────────┐
+│  Pipeline 2: kubernetes-deploy    │
+│  Kubernetes Resources Layer       │
+│  - AWS Load Balancer Controller   │
+│  - ArgoCD                         │
+│  State: {env}/kubernetes/tfstate  │
+└───────────────────────────────────┘
 ```
 
 **Benefits:**
