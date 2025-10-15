@@ -33,8 +33,8 @@ argocd_ingress_annotations = {
   # Certificate ARN will be automatically injected by the ACM module below
 
   # Enable HTTPS and redirect HTTP to HTTPS
-  "alb.ingress.kubernetes.io/listen-ports"    = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
-  "alb.ingress.kubernetes.io/ssl-redirect"    = "443"
+  "alb.ingress.kubernetes.io/listen-ports" = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
+  "alb.ingress.kubernetes.io/ssl-redirect" = "443"
 
   # Use modern TLS policy
   "alb.ingress.kubernetes.io/ssl-policy" = "ELBSecurityPolicy-TLS13-1-2-2021-06"

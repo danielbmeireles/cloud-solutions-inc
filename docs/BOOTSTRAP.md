@@ -1,6 +1,16 @@
-# Terraform Remote State Bootstrap Instructions
+# 🚀 Terraform Remote State Bootstrap Instructions <!-- omit in toc -->
 
 This document provides instructions for bootstrapping a Terraform remote state backend using an S3 bucket. The provided script automates the creation of the necessary S3 bucket with appropriate configurations.
+
+## 📑 Table of Contents <!-- omit in toc -->
+
+- [📋 Prerequisites](#-prerequisites)
+- [📚 Usage](#-usage)
+- [🏗️ What the Script Creates](#️-what-the-script-creates)
+- [📁 State File Structure](#-state-file-structure)
+- [🦶 Next Steps](#-next-steps)
+- [🏋️ Example Backend Configurations](#️-example-backend-configurations)
+- [😵‍💫 Troubleshooting](#-troubleshooting)
 
 ## 📋 Prerequisites
 
@@ -12,7 +22,7 @@ This document provides instructions for bootstrapping a Terraform remote state b
   - `s3:PutEncryptionConfiguration`
   - `s3:PutPublicAccessBlock`
 
-## 📚️ Usage
+## 📚 Usage
 
 ### Default Configuration
 
@@ -33,7 +43,7 @@ export AWS_REGION="eu-west-1"
 ./scripts/bootstrap-terraform-backend.sh
 ```
 
-## 🕌 What the Script Creates
+## 🏗️ What the Script Creates
 
 **S3 Bucket** for storing Terraform state files with:
   - Versioning enabled (for state history)
@@ -41,30 +51,135 @@ export AWS_REGION="eu-west-1"
   - Public access blocked
   - Region-specific configuration (if applicable)
 
-## 🦶 Next Steps
+## 📁 State File Structure
+
+This project uses a **two-layer architecture** with separate state files:
+
+```
+s3://terraform-state-bucket/
+├── production/
+│   ├── infra/
+│   │   └── terraform.tfstate          # Infrastructure layer
+│   └── kubernetes/
+│       └── terraform.tfstate          # Kubernetes layer
+├── staging/
+│   ├── infra/
+│   │   └── terraform.tfstate
+│   └── kubernetes/
+│       └── terraform.tfstate
+└── development/
+    ├── infra/
+    │   └── terraform.tfstate
+    └── kubernetes/
+        └── terraform.tfstate
+```
+
+**Why Two Separate States?**
+
+- ✅ **Separation of Concerns**: Infrastructure vs Kubernetes resources
+- ✅ **Independent Deployments**: Update ArgoCD without touching EKS
+- ✅ **Granular Rollback**: Revert only the layer that failed
+- ✅ **Reduced Blast Radius**: Changes are isolated to their layer
+
+## 📝 Next Steps
 
 After running the bootstrap script:
 
-1. Copy the backend configuration output by the script
-2. Add it to your Terraform configuration (`environments/<env>/tfbackend.hcl`)
-3. Run `terraform init -backend-config=environments/<env>/tfbackend.hcl` to initialize the backend
-4. If migrating existing state, Terraform will prompt you to copy it
+### 1. Configure Infrastructure Layer Backend
 
-## 🏋️ Example Backend Configuration
+Create `environments/<env>/tfbackend.hcl` in the **root directory**:
 
 ```hcl
-    bucket         = "terraform-state-123456789012"
-    key            = "staging/terraform.tfstate"
-    region         = "us-east-1"
-    use_lockfile   = true
-    encrypt        = true
+bucket       = "terraform-state-123456789012"
+key          = "production/infra/terraform.tfstate"
+region       = "us-east-1"
+use_lockfile = true
+encrypt      = true
 ```
 
-## 😵‍💫 Troubleshooting
+Then initialize:
 
-- **Bucket name already taken**: S3 bucket names are globally unique. Use `TF_STATE_BUCKET` to specify a different name.
-- **Permissions error**: Ensure your AWS credentials have the required IAM permissions listed above.
-- **Region mismatch**: Ensure `AWS_REGION` matches your desired region.
+```bash
+terraform init -backend-config=environments/production/tfbackend.hcl
+```
+
+### 2. Configure Kubernetes Layer Backend
+
+Create `kubernetes/environments/<env>/tfbackend.hcl`:
+
+```hcl
+bucket       = "terraform-state-123456789012"
+key          = "production/kubernetes/terraform.tfstate"
+region       = "us-east-1"
+use_lockfile = true
+encrypt      = true
+```
+
+Then initialize:
+
+```bash
+cd kubernetes
+terraform init -backend-config=environments/production/tfbackend.hcl
+```
+
+### 3. Apply Infrastructure First
+
+```bash
+# Infrastructure must be deployed first
+terraform apply -var-file=environments/production/terraform.tfvars
+
+# Then Kubernetes resources
+cd kubernetes
+terraform apply -var-file=environments/production/terraform.tfvars
+```
+
+## 📝 Example Backend Configurations
+
+### Infrastructure Layer
+
+**File**: `environments/production/tfbackend.hcl`
+
+```hcl
+bucket       = "terraform-state-123456789012"
+key          = "production/infra/terraform.tfstate"
+region       = "us-east-1"
+use_lockfile = true
+encrypt      = true
+```
+
+### Kubernetes Layer
+
+**File**: `kubernetes/environments/production/tfbackend.hcl`
+
+```hcl
+bucket       = "terraform-state-123456789012"
+key          = "production/kubernetes/terraform.tfstate"
+region       = "us-east-1"
+use_lockfile = true
+encrypt      = true
+```
+
+## 🔧 Troubleshooting
+
+### Bucket name already taken
+S3 bucket names are globally unique. Use `TF_STATE_BUCKET` to specify a different name.
+
+### Permissions error
+Ensure your AWS credentials have the required IAM permissions listed above.
+
+### Region mismatch
+Ensure `AWS_REGION` matches your desired region.
+
+### State file not found
+Make sure you've:
+1. Run the bootstrap script to create the S3 bucket
+2. Created the backend configuration files with correct paths
+3. Initialized Terraform with the backend config
+
+### Wrong state file being used
+Verify the `key` parameter in your `tfbackend.hcl` file:
+- Infrastructure: Should end with `/infra/terraform.tfstate`
+- Kubernetes: Should end with `/kubernetes/terraform.tfstate`
 
 ---
 
