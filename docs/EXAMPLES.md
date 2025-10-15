@@ -10,6 +10,7 @@ This document provides instructions for deploying sample applications to test th
 - [🌐 Access the Application](#-access-the-application)
 - [🔧 Troubleshooting](#-troubleshooting)
 - [🧹 Cleanup](#-cleanup)
+- [📚 Related Documentation](#-related-documentation)
 
 ## 📋 Prerequisites
 
@@ -138,12 +139,6 @@ This will:
 - Clean up associated target groups
 
 **Note**: The ALB deletion may take 1-2 minutes to complete.
-
-## 📚 Related Documentation
-
-- [EKS Documentation](EKS.md) - EKS deployment and operations
-- [Kubernetes Infrastructure](KUBERNETES.md) - Kubernetes layer setup
-- [AWS Load Balancer Controller](AWS_LOAD_BALANCER_CONTROLLER.md) - Controller documentation
 
 ---
 

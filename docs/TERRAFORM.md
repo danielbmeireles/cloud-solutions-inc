@@ -5,13 +5,15 @@ Comprehensive Terraform module reference and configuration guide for the Cloud S
 ## 📑 Table of Contents <!-- omit in toc -->
 
 - [🏗️ Overview](#️-overview)
-- [📁 Project Structure](#-project-structure)
-- [🔧 Infrastructure Layer (Root Module)](#-infrastructure-layer-root-module)
+- [� Infrastructure Layer (Root Module)](#-infrastructure-layer-root-module)
 - [☸️ Kubernetes Layer](#️-kubernetes-layer)
 - [📦 Module Reference](#-module-reference)
 - [⚙️ Configuration](#️-configuration)
 - [🚀 Usage](#-usage)
 - [✨ Best Practices](#-best-practices)
+- [💡 Practical Examples](#-practical-examples)
+- [📚 Related Documentation](#-related-documentation)
+- [🔗 External Resources](#-external-resources)
 
 ## 🏗️ Overview
 
@@ -25,43 +27,6 @@ This separation provides:
 - ✅ Reduced blast radius for changes
 - ✅ Cleaner dependency management
 - ✅ Better CI/CD workflows
-
-## 📁 Project Structure
-
-```
-.
-├── main.tf                      # Infrastructure layer main configuration
-├── variables.tf                 # Infrastructure layer variables
-├── outputs.tf                   # Infrastructure layer outputs
-├── versions.tf                  # Provider version constraints
-├── backend.tf                   # Terraform backend configuration
-├── TERRAFORM_ROOT.md            # Auto-generated infrastructure docs
-│
-├── modules/                     # Reusable Terraform modules
-│   ├── vpc/                     # VPC and networking
-│   ├── eks/                     # EKS cluster and node groups
-│   ├── kms/                     # KMS encryption keys
-│   ├── efs/                     # EFS file system
-│   ├── cloudwatch/              # CloudWatch monitoring
-│   ├── alb/                     # ALB security groups
-│   ├── acm/                     # ACM certificates
-│   └── argocd/                  # ArgoCD Helm deployment
-│
-├── kubernetes/                  # Kubernetes layer
-│   ├── main.tf                  # Kubernetes resources configuration
-│   ├── variables.tf             # Kubernetes layer variables
-│   ├── outputs.tf               # Kubernetes layer outputs
-│   ├── data.tf                  # Remote state data sources
-│   ├── iam.tf                   # IAM roles for Kubernetes
-│   └── TERRAFORM_KUBERNETES.md  # Auto-generated Kubernetes docs
-│
-└── environments/                # Environment-specific configurations
-    ├── production/
-    │   ├── terraform.tfvars     # Production variables
-    │   └── tfbackend.hcl        # Production backend config
-    ├── staging/
-    └── development/
-```
 
 ## 🔧 Infrastructure Layer (Root Module)
 
@@ -134,21 +99,21 @@ Each module has auto-generated documentation with inputs, outputs, and examples.
 
 ### Infrastructure Modules
 
-| Module | Description | Documentation |
-|--------|-------------|---------------|
-| **VPC** | Virtual Private Cloud with multi-AZ subnets | [modules/vpc/README.md](../modules/vpc/README.md) |
-| **EKS** | Managed Kubernetes cluster and node groups | [modules/eks/README.md](../modules/eks/README.md) |
-| **KMS** | Customer-managed encryption keys | [modules/kms/README.md](../modules/kms/README.md) |
-| **EFS** | Elastic File System for shared storage | [modules/efs/README.md](../modules/efs/README.md) |
-| **CloudWatch** | Monitoring dashboards and log groups | [modules/cloudwatch/README.md](../modules/cloudwatch/README.md) |
-| **ALB** | Security groups for load balancers | [modules/alb/README.md](../modules/alb/README.md) |
+| Module         | Description                                 | Documentation                                                   |
+| -------------- | ------------------------------------------- | --------------------------------------------------------------- |
+| **VPC**        | Virtual Private Cloud with multi-AZ subnets | [modules/vpc/README.md](../modules/vpc/README.md)               |
+| **EKS**        | Managed Kubernetes cluster and node groups  | [modules/eks/README.md](../modules/eks/README.md)               |
+| **KMS**        | Customer-managed encryption keys            | [modules/kms/README.md](../modules/kms/README.md)               |
+| **EFS**        | Elastic File System for shared storage      | [modules/efs/README.md](../modules/efs/README.md)               |
+| **CloudWatch** | Monitoring dashboards and log groups        | [modules/cloudwatch/README.md](../modules/cloudwatch/README.md) |
+| **ALB**        | Security groups for load balancers          | [modules/alb/README.md](../modules/alb/README.md)               |
 
 ### Kubernetes Modules
 
-| Module | Description | Documentation |
-|--------|-------------|---------------|
-| **ACM** | AWS Certificate Manager for SSL/TLS | [modules/acm/README.md](../modules/acm/README.md) |
-| **ArgoCD** | GitOps deployment via Helm | [modules/argocd/README.md](../modules/argocd/README.md) |
+| Module     | Description                         | Documentation                                           |
+| ---------- | ----------------------------------- | ------------------------------------------------------- |
+| **ACM**    | AWS Certificate Manager for SSL/TLS | [modules/acm/README.md](../modules/acm/README.md)       |
+| **ArgoCD** | GitOps deployment via Helm          | [modules/argocd/README.md](../modules/argocd/README.md) |
 
 ## ⚙️ Configuration
 
@@ -734,15 +699,7 @@ eks_node_groups = {
 terraform apply -var-file=environments/production/terraform.tfvars
 ```
 
-## 📚 Related Documentation
-
-- [Architecture](ARCHITECTURE.md) - Infrastructure design and decisions
-- [Bootstrap](BOOTSTRAP.md) - Terraform state backend setup
-- [CI/CD](CICD.md) - Automated deployment workflows
-- [EKS](EKS.md) - EKS cluster operations
-- [Kubernetes](KUBERNETES.md) - Kubernetes layer deployment
-
-## 🔗 External Resources
+##  External Resources
 
 - [Terraform Documentation](https://www.terraform.io/docs)
 - [AWS Provider Documentation](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)

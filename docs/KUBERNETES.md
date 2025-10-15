@@ -147,49 +147,7 @@ argocd_ingress_annotations = {
 
 ### 🔒 SSL/TLS Configuration with AWS Certificate Manager
 
-For production use with custom domains, ArgoCD uses AWS Certificate Manager (ACM) for SSL/TLS certificates.
-
-**See: [ArgoCD Deployment Guide - Custom Domain Setup](ARGOCD.md#-custom-domain-setup-with-ssltls)** for complete step-by-step instructions.
-
-#### Configuration Example
-
-```hcl
-# In terraform.tfvars
-argocd_domain = "argocd.meireles.dev"
-
-# Enable ACM certificate (created automatically by Terraform)
-acm_certificate_enabled = true
-acm_wait_for_validation = false  # Set to true after adding DNS validation records
-
-# Ingress configuration (certificate ARN injected automatically)
-argocd_ingress_annotations = {
-  "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
-  "alb.ingress.kubernetes.io/target-type"      = "ip"
-  "alb.ingress.kubernetes.io/listen-ports"     = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
-  "alb.ingress.kubernetes.io/ssl-redirect"     = "443"
-  "alb.ingress.kubernetes.io/ssl-policy"       = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-  "alb.ingress.kubernetes.io/backend-protocol" = "HTTP"
-}
-```
-
-#### Setup Steps
-
-1. **Deploy with Terraform** - ACM certificate is created automatically
-2. **Get validation records** - Run `terraform output acm_validation_records`
-3. **Add DNS validation CNAME** - Add validation record to your DNS provider (e.g., Squarespace)
-4. **Wait for validation** - Certificate status changes to "ISSUED" (5-30 minutes)
-5. **Add ArgoCD CNAME** - Point your domain to the ALB DNS name
-6. **Access ArgoCD** - Visit `https://argocd.your-domain.com`
-
-**Benefits:**
-- ✅ Free SSL certificates with automatic renewal
-- ✅ Fully automated certificate creation via Terraform
-- ✅ Modern TLS 1.3 support
-- ✅ No cert-manager complexity
-- ✅ Works with any DNS provider (Squarespace, GoDaddy, Route53, etc.)
-- ✅ Production-ready and reliable
-
-**Total additional cost: $0** (ACM certificates are free for ALB use)
+For production use with custom domains, see the **[ArgoCD Deployment Guide](ARGOCD.md#-custom-domain-setup-with-ssltls)** for complete SSL/TLS setup instructions.
 
 ## 🔧 Helper Scripts
 
@@ -342,16 +300,8 @@ aws cloudwatch get-metric-statistics \
 
 ### Related Monitoring Documentation
 
-- [Architecture Monitoring](ARCHITECTURE.md#-monitoring) - Infrastructure-wide monitoring
+- [Architecture Monitoring](ARCHITECTURE.md#monitoring-and-logging) - Infrastructure-wide monitoring
 - [EKS Monitoring](EKS.md#-monitoring-and-operations) - Cluster-level monitoring
-
-## 📚 Related Documentation
-
-- [ArgoCD Deployment Guide](ARGOCD.md) - Complete deployment and SSL/TLS setup guide
-- [Architecture Documentation](ARCHITECTURE.md)
-- [EKS Documentation](EKS.md)
-- [Terraform Reference](TERRAFORM.md)
-- [CI/CD Documentation](CICD.md)
 
 ## 🧹 Cleanup
 

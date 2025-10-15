@@ -13,9 +13,10 @@ The GitHub Actions workflows provide:
 
 - [📄 Pipeline Architecture](#-pipeline-architecture)
 - [📄 Workflow Files](#-workflow-files)
-- [🌍 Environment-Based Deployments](#-environment-based-deployments)
+- [� Environment-Based Deployments](#-environment-based-deployments)
 - [🔐 AWS Authentication Setup](#-aws-authentication-setup)
 - [🔑 Required Secrets and Variables](#-required-secrets-and-variables)
+- [📊 Monitoring](#-monitoring)
 
 ## 📄 Pipeline Architecture
 
@@ -418,7 +419,7 @@ infracost breakdown --path .
 
 ### Related Monitoring Documentation
 
-- [Architecture Monitoring](ARCHITECTURE.md#-monitoring) - Infrastructure-wide monitoring
+- [Architecture Monitoring](ARCHITECTURE.md#monitoring-and-logging) - Infrastructure-wide monitoring
 - [Kubernetes Monitoring](KUBERNETES.md#-monitoring) - Kubernetes layer monitoring
 
 ---

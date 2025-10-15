@@ -19,7 +19,7 @@ Production-ready AWS infrastructure for Cloud Solutions Inc., deployed using Ter
 
 - [ARCHITECTURE](docs/ARCHITECTURE.md) - Infrastructure components and design decisions
 - [ARGOCD](docs/ARGOCD.md) - ArgoCD deployment and access guide
-- [AWS LOAD BALANCER CONTROLLER](docs/AWS_LOAD_BALANCER_CONTROLLER.md) - ALB/NLB controller documentation
+- [AWS LOAD BALANCER CONTROLLER](docs/ALB_CONTROLLER.md) - ALB/NLB controller documentation
 - [BOOTSTRAP](docs/BOOTSTRAP.md) - Remote state backend setup
 - [CICD](docs/CICD.md) - CI/CD pipeline documentation
 - [DISCLAIMER](docs/DISCLAIMER.md) - Important notes about the use of AI tools and development process

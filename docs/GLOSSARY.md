@@ -5,12 +5,14 @@ Comprehensive glossary of terms, acronyms, and concepts used in the Cloud Soluti
 ## 📑 Table of Contents <!-- omit in toc -->
 
 - [AWS Services](#aws-services)
-- [Kubernetes & Container Terms](#kubernetes--container-terms)
+- [Kubernetes \& Container Terms](#kubernetes--container-terms)
 - [Terraform Terms](#terraform-terms)
 - [Networking Terms](#networking-terms)
-- [Security & IAM Terms](#security--iam-terms)
-- [DevOps & CI/CD Terms](#devops--cicd-terms)
+- [Security \& IAM Terms](#security--iam-terms)
+- [DevOps \& CI/CD Terms](#devops--cicd-terms)
 - [Project-Specific Terms](#project-specific-terms)
+- [Acronym Quick Reference](#acronym-quick-reference)
+- [Related Documentation](#related-documentation)
 
 ## AWS Services
 
@@ -22,12 +24,12 @@ AWS service that provides free SSL/TLS certificates with automatic renewal. Used
 ### ALB (Application Load Balancer)
 Layer 7 load balancer that routes HTTP/HTTPS traffic to targets based on request content. Automatically provisioned by AWS Load Balancer Controller from Kubernetes Ingress resources.
 
-**See:** [AWS Load Balancer Controller](AWS_LOAD_BALANCER_CONTROLLER.md)
+**See:** [AWS Load Balancer Controller](ALB_CONTROLLER.md)
 
 ### CloudWatch
 AWS monitoring and observability service that collects metrics, logs, and events from AWS resources and applications.
 
-**See:** [Architecture - Monitoring](ARCHITECTURE.md#-monitoring)
+**See:** [Architecture - Monitoring](ARCHITECTURE.md#monitoring-and-logging)
 
 ### EBS (Elastic Block Store)
 Block storage volumes for EC2 instances. Used for persistent storage in EKS node groups.
@@ -42,7 +44,7 @@ Virtual servers in AWS. EKS worker nodes run as EC2 instances.
 ### EFS (Elastic File System)
 Fully managed NFS file system that can be shared across multiple EC2 instances or containers.
 
-**See:** [Architecture - Infrastructure Components](ARCHITECTURE.md#infrastructure-components)
+**See:** [Architecture - Infrastructure Components](ARCHITECTURE.md#-infrastructure-components)
 
 ### EKS (Elastic Kubernetes Service)
 AWS managed Kubernetes service that runs the Kubernetes control plane.
@@ -62,12 +64,12 @@ Enhanced version of EC2 metadata service with session-oriented authentication fo
 ### KMS (Key Management Service)
 AWS service for creating and managing encryption keys. Used for encrypting EKS secrets and EBS volumes.
 
-**See:** [Architecture - Security](ARCHITECTURE.md#encryption)
+**See:** [Architecture - Security](ARCHITECTURE.md#encryption-at-rest)
 
 ### NLB (Network Load Balancer)
 Layer 4 load balancer that routes TCP/UDP traffic based on IP protocol data.
 
-**See:** [AWS Load Balancer Controller](AWS_LOAD_BALANCER_CONTROLLER.md)
+**See:** [AWS Load Balancer Controller](ALB_CONTROLLER.md)
 
 ### S3 (Simple Storage Service)
 Object storage service. Used for storing Terraform state files.
@@ -110,7 +112,7 @@ Package manager for Kubernetes. Uses charts to define, install, and upgrade Kube
 ### Ingress
 Kubernetes resource that manages external access to services, typically HTTP/HTTPS.
 
-**See:** [AWS Load Balancer Controller](AWS_LOAD_BALANCER_CONTROLLER.md)
+**See:** [AWS Load Balancer Controller](ALB_CONTROLLER.md)
 
 ### Namespace
 Virtual cluster within a Kubernetes cluster for resource isolation.
@@ -160,7 +162,7 @@ Reusable container for multiple resources that are used together.
 ### Output
 Value exported from a Terraform module or configuration.
 
-**See:** [Terraform Outputs](TERRAFORM.md#-configuration)
+**See:** [Terraform Outputs](TERRAFORM.md#️-configuration)
 
 ### Provider
 Plugin that enables Terraform to interact with APIs (AWS, Kubernetes, Helm, etc.).
@@ -250,7 +252,7 @@ Identity with specific permissions that can be assumed by trusted entities.
 ### IRSA (IAM Roles for Service Accounts)
 Mechanism providing IAM credentials to Kubernetes pods via ServiceAccount annotations.
 
-**See:** [EKS IRSA](EKS.md#iam-roles-for-service-accounts-irsa)
+**See:** [EKS IRSA](EKS.md#using-irsa-iam-roles-for-service-accounts)
 
 **Example:**
 ```yaml
@@ -348,32 +350,32 @@ Project architecture separating infrastructure and Kubernetes deployments into i
 
 ## Acronym Quick Reference
 
-| Acronym | Full Term | Category |
-|---------|-----------|----------|
-| ACM | AWS Certificate Manager | AWS Service |
-| ALB | Application Load Balancer | AWS Service |
-| ARN | Amazon Resource Name | AWS |
-| AZ | Availability Zone | AWS/Networking |
-| CI/CD | Continuous Integration/Deployment | DevOps |
-| CIDR | Classless Inter-Domain Routing | Networking |
-| DNS | Domain Name System | Networking |
-| EBS | Elastic Block Store | AWS Service |
-| EC2 | Elastic Compute Cloud | AWS Service |
-| EFS | Elastic File System | AWS Service |
-| EKS | Elastic Kubernetes Service | AWS Service |
-| gRPC | gRPC Remote Procedure Call | Technology |
-| IAM | Identity and Access Management | AWS Service |
-| IaC | Infrastructure as Code | DevOps |
-| IMDSv2 | Instance Metadata Service v2 | AWS |
-| IRSA | IAM Roles for Service Accounts | AWS/Kubernetes |
-| KMS | Key Management Service | AWS Service |
-| NLB | Network Load Balancer | AWS Service |
-| OIDC | OpenID Connect | Security |
-| RBAC | Role-Based Access Control | Kubernetes/Security |
-| S3 | Simple Storage Service | AWS Service |
-| SNS | Simple Notification Service | AWS Service |
-| TLS | Transport Layer Security | Security |
-| VPC | Virtual Private Cloud | AWS Service |
+| Acronym | Full Term                         | Category            |
+| ------- | --------------------------------- | ------------------- |
+| ACM     | AWS Certificate Manager           | AWS Service         |
+| ALB     | Application Load Balancer         | AWS Service         |
+| ARN     | Amazon Resource Name              | AWS                 |
+| AZ      | Availability Zone                 | AWS/Networking      |
+| CI/CD   | Continuous Integration/Deployment | DevOps              |
+| CIDR    | Classless Inter-Domain Routing    | Networking          |
+| DNS     | Domain Name System                | Networking          |
+| EBS     | Elastic Block Store               | AWS Service         |
+| EC2     | Elastic Compute Cloud             | AWS Service         |
+| EFS     | Elastic File System               | AWS Service         |
+| EKS     | Elastic Kubernetes Service        | AWS Service         |
+| gRPC    | gRPC Remote Procedure Call        | Technology          |
+| IAM     | Identity and Access Management    | AWS Service         |
+| IaC     | Infrastructure as Code            | DevOps              |
+| IMDSv2  | Instance Metadata Service v2      | AWS                 |
+| IRSA    | IAM Roles for Service Accounts    | AWS/Kubernetes      |
+| KMS     | Key Management Service            | AWS Service         |
+| NLB     | Network Load Balancer             | AWS Service         |
+| OIDC    | OpenID Connect                    | Security            |
+| RBAC    | Role-Based Access Control         | Kubernetes/Security |
+| S3      | Simple Storage Service            | AWS Service         |
+| SNS     | Simple Notification Service       | AWS Service         |
+| TLS     | Transport Layer Security          | Security            |
+| VPC     | Virtual Private Cloud             | AWS Service         |
 
 ## Related Documentation
 

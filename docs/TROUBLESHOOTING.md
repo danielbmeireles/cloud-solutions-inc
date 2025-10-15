@@ -10,12 +10,13 @@ Comprehensive troubleshooting guide for Cloud Solutions Inc. infrastructure.
 - [📦 Terraform Issues](#-terraform-issues)
 - [🚀 ArgoCD Issues](#-argocd-issues)
 - [🔌 AWS Load Balancer Controller Issues](#-aws-load-balancer-controller-issues)
-- [🔐 Authentication & Permissions](#-authentication--permissions)
+- [🔐 Authentication \& Permissions](#-authentication--permissions)
 - [💾 State Management Issues](#-state-management-issues)
-- [🔒 Certificate & SSL/TLS Issues](#-certificate--ssltls-issues)
-- [📊 Monitoring & Logging](#-monitoring--logging)
+- [🔒 Certificate \& SSL/TLS Issues](#-certificate--ssltls-issues)
+- [📊 Monitoring \& Logging](#-monitoring--logging)
 - [🔄 CI/CD Pipeline Issues](#-cicd-pipeline-issues)
 - [📚 Component-Specific Troubleshooting](#-component-specific-troubleshooting)
+- [🆘 Getting Help](#-getting-help)
 
 ## 🚨 Quick Diagnostic Commands
 
@@ -303,7 +304,7 @@ kubectl get endpoints <service-name> -n <namespace>
 
 ### Detailed Troubleshooting
 
-See: [AWS Load Balancer Controller Documentation](AWS_LOAD_BALANCER_CONTROLLER.md#-troubleshooting)
+See: [AWS Load Balancer Controller Documentation](ALB_CONTROLLER.md#-troubleshooting)
 
 ## 🔐 Authentication & Permissions
 
@@ -534,14 +535,14 @@ See: [CI/CD Documentation](CICD.md#-monitoring)
 
 For detailed component-specific troubleshooting, refer to:
 
-| Component | Documentation |
-|-----------|---------------|
-| **EKS Cluster** | [EKS Troubleshooting](EKS.md#-troubleshooting) |
-| **ArgoCD** | [ArgoCD Troubleshooting](ARGOCD.md#-troubleshooting) |
-| **AWS Load Balancer Controller** | [ALB Controller Troubleshooting](AWS_LOAD_BALANCER_CONTROLLER.md#-troubleshooting) |
-| **Kubernetes Layer** | [Kubernetes Troubleshooting](KUBERNETES.md#-troubleshooting) |
-| **Terraform** | [Terraform Best Practices](TERRAFORM.md#-best-practices) |
-| **CI/CD** | [CI/CD Monitoring](CICD.md#-monitoring) |
+| Component                        | Documentation                                                        |
+| -------------------------------- | -------------------------------------------------------------------- |
+| **EKS Cluster**                  | [EKS Troubleshooting](EKS.md#-troubleshooting)                       |
+| **ArgoCD**                       | [ArgoCD Troubleshooting](ARGOCD.md#-troubleshooting)                 |
+| **AWS Load Balancer Controller** | [ALB Controller Troubleshooting](ALB_CONTROLLER.md#-troubleshooting) |
+| **Kubernetes Layer**             | [Kubernetes Troubleshooting](KUBERNETES.md#-troubleshooting)         |
+| **Terraform**                    | [Terraform Best Practices](TERRAFORM.md#-best-practices)             |
+| **CI/CD**                        | [CI/CD Monitoring](CICD.md#-monitoring)                              |
 
 ## 🆘 Getting Help
 

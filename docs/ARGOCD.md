@@ -15,8 +15,7 @@ Complete guide to deploy and access ArgoCD on Amazon EKS with optional custom do
 - [📝 Configuration Reference](#-configuration-reference)
 - [💰 Cost](#-cost)
 - [🔄 Maintenance](#-maintenance)
-- [📚 Related Documentation](#-related-documentation)
-- [🔗 External Resources](#-external-resources)
+- [External Resources](#external-resources)
 
 ## 🏗️ Overview
 
@@ -586,14 +585,7 @@ kubectl get applications -n argocd -o yaml > argocd-apps-backup.yaml
 kubectl get appprojects -n argocd -o yaml > argocd-projects-backup.yaml
 ```
 
-## 📚 Related Documentation
-
-- [Architecture](ARCHITECTURE.md) - Infrastructure components and design decisions
-- [EKS Documentation](EKS.md) - EKS deployment and operations
-- [CI/CD Pipeline](CICD.md) - Automated deployment workflows
-- [Bootstrap](BOOTSTRAP.md) - Terraform state backend setup
-
-## 🔗 External Resources
+##  External Resources
 
 - [ArgoCD Documentation](https://argo-cd.readthedocs.io/)
 - [AWS Certificate Manager](https://docs.aws.amazon.com/acm/)
