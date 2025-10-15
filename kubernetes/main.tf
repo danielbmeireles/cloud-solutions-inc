@@ -93,119 +93,30 @@ resource "helm_release" "aws_load_balancer_controller" {
   ]
 }
 
-# Wait for AWS Load Balancer Controller to be ready
-resource "null_resource" "wait_for_alb_controller" {
-  count = var.install_aws_load_balancer_controller ? 1 : 0
+# ============================================================================
+# ACM Certificate for ArgoCD (if enabled)
+# ============================================================================
 
-  provisioner "local-exec" {
-    command = <<-EOT
-      echo "Waiting for AWS Load Balancer Controller to be ready..."
-      kubectl wait --for=condition=Available --timeout=300s deployment/aws-load-balancer-controller -n kube-system
+module "acm_certificate" {
+  source = "../modules/acm"
+  count  = var.acm_certificate_enabled ? 1 : 0
 
-      echo "Waiting for webhook service to have endpoints..."
-      for i in {1..30}; do
-        if kubectl get endpoints controller-webhook-service -n kube-system &>/dev/null && \
-           [ $(kubectl get endpoints controller-webhook-service -n kube-system -o jsonpath='{.subsets[*].addresses[*].ip}' | wc -w) -gt 0 ]; then
-          echo "Webhook service has endpoints"
-          exit 0
-        fi
-        echo "Waiting for webhook endpoints... ($i/30)"
-        sleep 10
-      done
-      echo "Warning: Webhook endpoints not ready, continuing anyway..."
-    EOT
+  domain_name               = var.argocd_domain
+  subject_alternative_names = var.acm_subject_alternative_names
+  wait_for_validation       = var.acm_wait_for_validation
+
+  tags = {
+    Name        = "argocd-certificate"
+    Service     = "ArgoCD"
+    Environment = var.environment
+    ManagedBy   = "Terraform"
   }
-
-  depends_on = [helm_release.aws_load_balancer_controller]
 }
 
-# cert-manager for SSL/TLS certificate management
-resource "helm_release" "cert_manager" {
-  name             = "cert-manager"
-  repository       = "https://charts.jetstack.io"
-  chart            = "cert-manager"
-  version          = "v1.16.2"
-  namespace        = "cert-manager"
-  create_namespace = true
-
-  timeout = 600
-  atomic  = true
-
-  values = [
-    yamlencode({
-      crds = {
-        enabled = true
-        keep    = true
-      }
-    })
-  ]
-
-  depends_on = [null_resource.wait_for_alb_controller]
-}
-
-# Let's Encrypt ClusterIssuers (apply after cert-manager is ready)
-# Using null_resource to apply via kubectl after CRDs are installed
-resource "null_resource" "letsencrypt_clusterissuers" {
-  # Trigger re-creation when cert-manager version changes
-  triggers = {
-    cert_manager_version = helm_release.cert_manager.version
-  }
-
-  provisioner "local-exec" {
-    command = <<-EOT
-      # Wait for cert-manager to be ready
-      echo "Waiting for cert-manager to be ready..."
-      kubectl wait --for=condition=Available --timeout=300s deployment/cert-manager -n cert-manager
-      kubectl wait --for=condition=Available --timeout=300s deployment/cert-manager-webhook -n cert-manager
-
-      # Apply ClusterIssuers
-      echo "Creating Let's Encrypt ClusterIssuers..."
-      kubectl apply -f - <<EOF
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-prod
-spec:
-  acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: cloud-solutions@meireles.dev
-    privateKeySecretRef:
-      name: letsencrypt-prod
-    solvers:
-    - http01:
-        ingress:
-          ingressClassName: alb
----
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-staging
-spec:
-  acme:
-    server: https://acme-staging-v02.api.letsencrypt.org/directory
-    email: cloud-solutions@meireles.dev
-    privateKeySecretRef:
-      name: letsencrypt-staging
-    solvers:
-    - http01:
-        ingress:
-          ingressClassName: alb
-EOF
-    EOT
-  }
-
-  # Clean up on destroy
-  provisioner "local-exec" {
-    when    = destroy
-    command = <<-EOT
-      kubectl delete clusterissuer letsencrypt-prod letsencrypt-staging --ignore-not-found=true
-    EOT
-  }
-
-  depends_on = [helm_release.cert_manager]
-}
-
+# ============================================================================
 # ArgoCD Module
+# ============================================================================
+
 module "argocd" {
   source = "../modules/argocd"
 
@@ -216,12 +127,16 @@ module "argocd" {
   server_service_type  = var.argocd_server_service_type
   ingress_enabled      = var.argocd_ingress_enabled
   ingress_class_name   = var.argocd_ingress_class_name
-  ingress_annotations  = var.argocd_ingress_annotations
-  enable_certificate   = var.argocd_enable_certificate
-  certificate_issuer   = var.argocd_certificate_issuer
+  # Automatically use ACM certificate ARN if module is enabled
+  ingress_annotations = var.acm_certificate_enabled ? merge(
+    var.argocd_ingress_annotations,
+    {
+      "alb.ingress.kubernetes.io/certificate-arn" = module.acm_certificate[0].certificate_arn
+    }
+  ) : var.argocd_ingress_annotations
 
   depends_on = [
-    helm_release.cert_manager,
-    null_resource.letsencrypt_clusterissuers
+    helm_release.aws_load_balancer_controller,
+    module.acm_certificate
   ]
 }

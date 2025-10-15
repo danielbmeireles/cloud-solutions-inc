@@ -1,25 +1,40 @@
-# Kubernetes Configuration
+# Kubernetes Infrastructure - Cloud Solutions Inc.
 
-This directory contains Kubernetes-related Terraform configurations for deploying additional components to the EKS cluster.
+Production-ready Kubernetes infrastructure for AWS EKS with ArgoCD and AWS Load Balancer Controller.
 
-## Components
+## 🎯 Features
 
-- **cert-manager**: Automatic SSL/TLS certificate management via Let's Encrypt
-- **AWS Load Balancer Controller**: Manages ALB/NLB for ingress resources
-- **ArgoCD**: GitOps continuous delivery tool with SSL/TLS support
+- ✅ **AWS Load Balancer Controller** - Automatic ALB/NLB provisioning
+- ✅ **ArgoCD** - GitOps continuous delivery
+- ✅ **AWS Certificate Manager (ACM)** - Free SSL/TLS certificates with automatic renewal
+- ✅ **Automated Certificate Management** - ACM certificates created via Terraform
+- ✅ **High Availability** - Multi-AZ deployment with pod anti-affinity
+- ✅ **Infrastructure as Code** - 100% Terraform managed
+
+## 📚 Documentation
+
+For comprehensive documentation, see the main [docs](../docs/) directory:
+
+- **[ArgoCD Custom Domain Setup](../docs/ARGOCD_CUSTOM_DOMAIN.md)** - Complete guide for setting up ArgoCD with custom domain and SSL/TLS via AWS ACM (RECOMMENDED)
+- **[Quick Setup Guide](../docs/QUICK_SETUP_GUIDE.md)** - 30-minute quick start guide
+- **[Architecture](../docs/ARCHITECTURE.md)** - Infrastructure components and design decisions
+- **[EKS Documentation](../docs/EKS.md)** - EKS deployment, configuration, and operations
+- **[Terraform Reference](../docs/TERRAFORM.md)** - Terraform module and variable reference
 
 ## Directory Structure
 
 ```
 kubernetes/
-├── main.tf                    # Main Terraform configuration
+├── main.tf                    # Main Terraform configuration (ALB Controller, ACM, ArgoCD)
+├── data.tf                    # Data sources (remote state)
 ├── variables.tf               # Variable definitions
-├── outputs.tf                 # Output values
+├── outputs.tf                 # Output values (certificate info, ArgoCD URL)
 ├── iam.tf                     # IAM roles and policies
 ├── backend.tf                 # Terraform backend configuration
 ├── versions.tf                # Provider version constraints
 ├── policies/                  # IAM policy documents
 ├── charts/                    # Custom Helm charts
+│   └── aws-load-balancer-controller/
 ├── environments/              # Environment-specific configurations
 │   └── production/
 │       ├── terraform.tfvars   # Production variables
@@ -137,62 +152,51 @@ argocd_ingress_annotations = {
 }
 ```
 
-### SSL/TLS Configuration
+### SSL/TLS Configuration with AWS Certificate Manager
 
-#### Option 1: Using cert-manager with Let's Encrypt (Recommended for DuckDNS)
+For production use with custom domains, ArgoCD uses AWS Certificate Manager (ACM) for SSL/TLS certificates.
 
-**See: [DuckDNS Setup Guide](../docs/DUCKDNS_SETUP.md)** for complete step-by-step instructions.
+**See: [ArgoCD Custom Domain Setup](../docs/ARGOCD_CUSTOM_DOMAIN.md)** for complete step-by-step instructions.
 
-The infrastructure includes cert-manager for automatic SSL/TLS certificates via Let's Encrypt:
+#### Configuration Example
 
 ```hcl
-# In environments/production/terraform.tfvars
-argocd_domain              = "argocd-dbm.duckdns.org"
-argocd_server_insecure     = false
-argocd_enable_certificate  = true
-argocd_certificate_issuer  = "letsencrypt-prod"
+# In terraform.tfvars
+argocd_domain = "argocd.meireles.dev"
 
+# Enable ACM certificate (created automatically by Terraform)
+acm_certificate_enabled = true
+acm_wait_for_validation = false  # Set to true after adding DNS validation records
+
+# Ingress configuration (certificate ARN injected automatically)
 argocd_ingress_annotations = {
   "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
   "alb.ingress.kubernetes.io/target-type"      = "ip"
   "alb.ingress.kubernetes.io/listen-ports"     = "[{\"HTTP\": 80}, {\"HTTPS\": 443}]"
   "alb.ingress.kubernetes.io/ssl-redirect"     = "443"
-  "alb.ingress.kubernetes.io/backend-protocol" = "HTTPS"
+  "alb.ingress.kubernetes.io/ssl-policy"       = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  "alb.ingress.kubernetes.io/backend-protocol" = "HTTP"
 }
 ```
 
-Benefits:
-- Free SSL certificates
-- Automatic renewal every 90 days
-- No AWS ACM required
-- Works with DuckDNS free domains
+#### Setup Steps
 
-#### Option 2: Using ACM Certificate (For Custom Domains)
+1. **Deploy with Terraform** - ACM certificate is created automatically
+2. **Get validation records** - Run `terraform output acm_validation_records`
+3. **Add DNS validation CNAME** - Add validation record to your DNS provider (e.g., Squarespace)
+4. **Wait for validation** - Certificate status changes to "ISSUED" (5-30 minutes)
+5. **Add ArgoCD CNAME** - Point your domain to the ALB DNS name
+6. **Access ArgoCD** - Visit `https://argocd.your-domain.com`
 
-For production use with custom domains, configure SSL/TLS via AWS Certificate Manager:
+**Benefits:**
+- ✅ Free SSL certificates with automatic renewal
+- ✅ Fully automated certificate creation via Terraform
+- ✅ Modern TLS 1.3 support
+- ✅ No cert-manager complexity
+- ✅ Works with any DNS provider (Squarespace, GoDaddy, Route53, etc.)
+- ✅ Production-ready and reliable
 
-1. Request/import certificate in AWS Certificate Manager (ACM)
-2. Update ingress annotations:
-
-```hcl
-argocd_ingress_annotations = {
-  "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
-  "alb.ingress.kubernetes.io/target-type"      = "ip"
-  "alb.ingress.kubernetes.io/certificate-arn"  = "arn:aws:acm:REGION:ACCOUNT:certificate/CERT_ID"
-  "alb.ingress.kubernetes.io/ssl-policy"       = "ELBSecurityPolicy-TLS-1-2-2017-01"
-  "alb.ingress.kubernetes.io/listen-ports"     = "[{\"HTTPS\":443}]"
-  "alb.ingress.kubernetes.io/ssl-redirect"     = "443"
-}
-```
-
-3. Update domain and disable insecure mode:
-
-```hcl
-argocd_domain          = "argocd.example.com"
-argocd_server_insecure = false
-```
-
-4. Create DNS record pointing to ALB
+**Total additional cost: $0** (ACM certificates are free for ALB use)
 
 ## Helper Scripts
 
@@ -260,12 +264,17 @@ Available outputs:
 - `argocd_server_url`: ArgoCD server URL
 - `aws_load_balancer_controller_installed`: ALB controller installation status
 - `aws_load_balancer_controller_role_arn`: IAM role ARN for ALB controller
+- `acm_certificate_arn`: ACM certificate ARN (if enabled)
+- `acm_certificate_status`: Certificate validation status
+- `acm_validation_records`: DNS validation records for Squarespace/DNS provider
 
 ## Related Documentation
 
-- [ArgoCD Troubleshooting Guide](ARGOCD_TROUBLESHOOTING.txt)
-- [Terraform Configuration Guide](TERRAFORM.md)
+- [ArgoCD Custom Domain Setup](../docs/ARGOCD_CUSTOM_DOMAIN.md) - Complete SSL/TLS setup guide
+- [Quick Setup Guide](../docs/QUICK_SETUP_GUIDE.md) - 30-minute quick start
+- [Architecture Documentation](../docs/ARCHITECTURE.md)
 - [EKS Documentation](../docs/EKS.md)
+- [Terraform Reference](../docs/TERRAFORM.md)
 - [CI/CD Documentation](../docs/CICD.md)
 
 ## Cleanup

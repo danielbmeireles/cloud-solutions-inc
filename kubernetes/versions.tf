@@ -17,16 +17,6 @@ terraform {
   }
 }
 
-# Data source to get infrastructure state
-data "terraform_remote_state" "infra" {
-  backend = "s3"
-  config = {
-    bucket = var.state_bucket
-    key    = "${var.environment}/infra/terraform.tfstate"
-    region = var.aws_region
-  }
-}
-
 provider "aws" {
   region = var.aws_region
 

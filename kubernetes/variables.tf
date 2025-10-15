@@ -81,14 +81,24 @@ variable "argocd_ingress_annotations" {
   }
 }
 
-variable "argocd_enable_certificate" {
-  description = "Enable automatic SSL/TLS certificate for ArgoCD via cert-manager"
+# ============================================================================
+# ACM Certificate Configuration
+# ============================================================================
+
+variable "acm_certificate_enabled" {
+  description = "Enable ACM certificate creation via Terraform for ArgoCD domain"
   type        = bool
   default     = false
 }
 
-variable "argocd_certificate_issuer" {
-  description = "cert-manager ClusterIssuer name for ArgoCD certificate generation"
-  type        = string
-  default     = "letsencrypt-prod"
+variable "acm_subject_alternative_names" {
+  description = "Additional domain names for the ACM certificate (e.g., for wildcard or multiple subdomains)"
+  type        = list(string)
+  default     = []
+}
+
+variable "acm_wait_for_validation" {
+  description = "Whether to wait for ACM certificate validation (requires DNS records to be added manually)"
+  type        = bool
+  default     = false
 }
