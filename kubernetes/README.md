@@ -15,33 +15,10 @@ Production-ready Kubernetes infrastructure for AWS EKS with ArgoCD and AWS Load 
 
 For comprehensive documentation, see the main [docs](../docs/) directory:
 
-- **[ArgoCD Custom Domain Setup](../docs/ARGOCD_CUSTOM_DOMAIN.md)** - Complete guide for setting up ArgoCD with custom domain and SSL/TLS via AWS ACM (RECOMMENDED)
-- **[Quick Setup Guide](../docs/QUICK_SETUP_GUIDE.md)** - 30-minute quick start guide
+- **[ArgoCD Deployment Guide](../docs/ARGOCD.md)** - Complete guide for deploying and accessing ArgoCD with optional custom domain and SSL/TLS via AWS ACM
 - **[Architecture](../docs/ARCHITECTURE.md)** - Infrastructure components and design decisions
 - **[EKS Documentation](../docs/EKS.md)** - EKS deployment, configuration, and operations
 - **[Terraform Reference](../docs/TERRAFORM.md)** - Terraform module and variable reference
-
-## Directory Structure
-
-```
-kubernetes/
-├── main.tf                    # Main Terraform configuration (ALB Controller, ACM, ArgoCD)
-├── data.tf                    # Data sources (remote state)
-├── variables.tf               # Variable definitions
-├── outputs.tf                 # Output values (certificate info, ArgoCD URL)
-├── iam.tf                     # IAM roles and policies
-├── backend.tf                 # Terraform backend configuration
-├── versions.tf                # Provider version constraints
-├── policies/                  # IAM policy documents
-├── charts/                    # Custom Helm charts
-│   └── aws-load-balancer-controller/
-├── environments/              # Environment-specific configurations
-│   └── production/
-│       ├── terraform.tfvars   # Production variables
-│       └── tfbackend.hcl      # Backend configuration
-└── scripts/                   # Helper scripts
-    └── patch-argocd-ingress.sh
-```
 
 ## Prerequisites
 
@@ -156,7 +133,7 @@ argocd_ingress_annotations = {
 
 For production use with custom domains, ArgoCD uses AWS Certificate Manager (ACM) for SSL/TLS certificates.
 
-**See: [ArgoCD Custom Domain Setup](../docs/ARGOCD_CUSTOM_DOMAIN.md)** for complete step-by-step instructions.
+**See: [ArgoCD Deployment Guide - Custom Domain Setup](../docs/ARGOCD.md#-custom-domain-setup-with-ssltls)** for complete step-by-step instructions.
 
 #### Configuration Example
 
@@ -270,8 +247,7 @@ Available outputs:
 
 ## Related Documentation
 
-- [ArgoCD Custom Domain Setup](../docs/ARGOCD_CUSTOM_DOMAIN.md) - Complete SSL/TLS setup guide
-- [Quick Setup Guide](../docs/QUICK_SETUP_GUIDE.md) - 30-minute quick start
+- [ArgoCD Deployment Guide](../docs/ARGOCD.md) - Complete deployment and SSL/TLS setup guide
 - [Architecture Documentation](../docs/ARCHITECTURE.md)
 - [EKS Documentation](../docs/EKS.md)
 - [Terraform Reference](../docs/TERRAFORM.md)

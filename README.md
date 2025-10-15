@@ -18,11 +18,14 @@ Production-ready AWS infrastructure for Cloud Solutions Inc., deployed using Ter
 ## Quick Links
 
 - [ARCHITECTURE](docs/ARCHITECTURE.md) - Infrastructure components and design decisions
-- [ARGOCD](docs/ARGOCD.md) - ArgoCD deployment and GitOps configuration
+- [ARGOCD](docs/ARGOCD.md) - ArgoCD deployment and access guide
+- [AWS LOAD BALANCER CONTROLLER](docs/AWS_LOAD_BALANCER_CONTROLLER.md) - ALB/NLB controller documentation
 - [BOOTSTRAP](docs/BOOTSTRAP.md) - Remote state backend setup
 - [CICD](docs/CICD.md) - CI/CD pipeline documentation
 - [DISCLAIMER](docs/DISCLAIMER.md) - Important notes about the use of AI tools and development process
 - [EKS](docs/EKS.md) - EKS deployment, configuration, and operations
+- [EXAMPLES](docs/EXAMPLES.md) - Sample application deployment examples
+- [KUBERNETES](docs/KUBERNETES.md) - Kubernetes infrastructure deployment
 - [TERRAFORM](docs/TERRAFORM.md) - Terraform module and variable reference
 
 ## Features

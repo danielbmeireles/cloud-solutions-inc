@@ -1,4 +1,10 @@
-# ⚠️ Disclaimer
+# ⚠️ Disclaimer <!-- omit in toc -->
+
+## 📑 Table of Contents <!-- omit in toc -->
+
+- [📐 Architecture Attribution](#-architecture-attribution)
+- [🤖 AI-Assisted Development](#-ai-assisted-development)
+- [📝 Important Notes](#-important-notes)
 
 ## 📐 Architecture Attribution
 
