@@ -46,20 +46,7 @@ resource "helm_release" "argocd" {
         ingress = {
           enabled          = var.ingress_enabled
           ingressClassName = var.ingress_class_name
-          annotations = merge(
-            var.ingress_annotations,
-            var.enable_certificate ? {
-              "cert-manager.io/cluster-issuer" = var.certificate_issuer
-            } : {}
-          )
-          # Configure host for proper cert-manager certificate generation
-          hosts = var.enable_certificate ? [var.argocd_domain] : []
-
-          # TLS configuration when certificate is enabled
-          tls = var.enable_certificate ? [{
-            secretName = "argocd-server-tls"
-            hosts      = [var.argocd_domain]
-          }] : []
+          annotations      = var.ingress_annotations
         }
 
         resources = var.server_resources
