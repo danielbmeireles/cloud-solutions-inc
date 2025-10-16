@@ -266,10 +266,10 @@ See: [ArgoCD Documentation - Troubleshooting](ARGOCD.md#-troubleshooting)
 **Diagnostics:**
 ```bash
 # Check controller pods
-kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
+kubectl get pods -n kube-system -l app.kubernetes.io/name=controller
 
 # Check controller logs
-kubectl logs -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller --tail=100
+kubectl logs -n kube-system -l app.kubernetes.io/name=controller --tail=100
 
 # Check ingress events
 kubectl describe ingress <ingress-name> -n <namespace>

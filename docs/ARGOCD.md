@@ -78,6 +78,12 @@ argocd_server_insecure     = true
 argocd_ingress_enabled     = true
 argocd_ingress_class_name  = "alb"
 
+# High Availability (optional - set to 1 for single replica)
+argocd_server_replicas      = 2
+argocd_repo_server_replicas = 2
+argocd_controller_replicas  = 1
+argocd_enable_ha            = true
+
 argocd_ingress_annotations = {
   "alb.ingress.kubernetes.io/scheme"      = "internet-facing"
   "alb.ingress.kubernetes.io/target-type" = "ip"
@@ -97,6 +103,12 @@ argocd_chart_version       = "8.5.10"
 argocd_server_insecure     = true  # TLS terminates at ALB
 argocd_ingress_enabled     = true
 argocd_ingress_class_name  = "alb"
+
+# High Availability (optional - set to 1 for single replica)
+argocd_server_replicas      = 2
+argocd_repo_server_replicas = 2
+argocd_controller_replicas  = 1
+argocd_enable_ha            = true
 
 argocd_ingress_annotations = {
   "alb.ingress.kubernetes.io/scheme"           = "internet-facing"
@@ -463,6 +475,15 @@ ArgoCD uses gRPC which can have issues with some ALBs. The `--grpc-web` flag use
 | `argocd_server_service_type` | Service type             | `ClusterIP`    | `ClusterIP`             |
 | `argocd_ingress_enabled`     | Enable ingress           | `true`         | `true`                  |
 | `argocd_ingress_class_name`  | Ingress class            | `alb`          | `alb`                   |
+
+### High Availability Variables
+
+| Variable                        | Description                            | Default | Example |
+| ------------------------------- | -------------------------------------- | ------- | ------- |
+| `argocd_server_replicas`        | Number of ArgoCD server replicas       | `2`     | `2`     |
+| `argocd_repo_server_replicas`   | Number of repo server replicas         | `2`     | `2`     |
+| `argocd_controller_replicas`    | Number of controller replicas          | `1`     | `1`     |
+| `argocd_enable_ha`              | Enable HA features (anti-affinity/PDB) | `true`  | `true`  |
 
 ### ACM Certificate Variables
 

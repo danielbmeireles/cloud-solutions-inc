@@ -36,7 +36,8 @@ This infrastructure implements a **two-pipeline, two-state architecture** that s
 │  Kubernetes Resources Layer                 │
 │  ├─ IAM Roles (IRSA for K8s)                │
 │  ├─ AWS Load Balancer Controller            │
-│  │  └─ Custom Helm Chart Wrapper            │
+│  │  └─ Custom Helm Chart Wrapper            |
+|  |- ACM (SSL/TLS Certificate)               │
 │  ├─ ArgoCD                                  │
 │  └─ Other K8s Resources                     │
 │  State: {env}/kubernetes/terraform.tfstate  │
@@ -53,6 +54,7 @@ This infrastructure implements a **two-pipeline, two-state architecture** that s
 2. **Kubernetes Pipeline** (`kubernetes-deploy`):
    - Triggered automatically after infrastructure deployment succeeds
    - Reads infrastructure outputs via `terraform_remote_state`
+   - Deploys SSL/TLS certificates in ACM
    - Deploys Kubernetes resources (ArgoCD, Load Balancer Controller)
    - Stores state in `{env}/kubernetes/terraform.tfstate`
 
@@ -125,6 +127,8 @@ This infrastructure implements a highly available, multi-AZ architecture on AWS 
   - Mount targets in each availability zone
   - EFS CSI Driver with IRSA integration
 - **EBS Volumes**: Persistent block storage via EBS CSI Driver
+  - Encrypted with dedicated KMS key
+  - Uses gp3 volumes for better performance
 
 ### Monitoring and Logging
 

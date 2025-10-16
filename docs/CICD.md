@@ -11,14 +11,14 @@ The GitHub Actions workflows provide:
 
 ## 📑 Table of Contents <!-- omit in toc -->
 
-- [📄 Pipeline Architecture](#-pipeline-architecture)
+- [📐 Pipeline Architecture](#-pipeline-architecture)
 - [📄 Workflow Files](#-workflow-files)
-- [� Environment-Based Deployments](#-environment-based-deployments)
+- [🌐 Environment-Based Deployments](#-environment-based-deployments)
 - [🔐 AWS Authentication Setup](#-aws-authentication-setup)
 - [🔑 Required Secrets and Variables](#-required-secrets-and-variables)
 - [📊 Monitoring](#-monitoring)
 
-## 📄 Pipeline Architecture
+## 📐 Pipeline Architecture
 
 ### Two-Stage Deployment
 
@@ -338,13 +338,6 @@ gh run view <run-id> --log
 gh run watch
 ```
 
-**Pipeline Metrics:**
-- Workflow success/failure rates
-- Deployment frequency
-- Time to deploy
-- Terraform plan/apply duration
-- Infrastructure drift detection
-
 ### Deployment Tracking
 
 **Monitor Active Deployments:**
@@ -374,48 +367,6 @@ aws s3 ls s3://cloud-solutions-terraform-state/ --recursive | grep terraform.tfs
 **GitHub Actions Notifications:**
 - Pipeline failures trigger email notifications to repository watchers
 - PR comments automatically notify reviewers of plan results
-- Slack/Discord webhooks can be configured in workflow files
-
-**Recommended Alerts:**
-1. Terraform plan shows unexpected changes
-2. Pipeline failures
-3. State lock conflicts
-4. Deployment duration exceeds threshold
-5. Cost increases beyond budget
-
-### Cost Monitoring
-
-If Infracost is configured:
-
-```bash
-# View cost impact in PR comments
-# Infracost automatically posts cost estimates on PRs
-
-# Manual cost check
-infracost breakdown --path .
-```
-
-### Best Practices
-
-1. **Monitor Pipeline Health:**
-   - Review failed workflows weekly
-   - Investigate slow deployments
-   - Check for state lock issues
-
-2. **Track Deployment Metrics:**
-   - Deployment frequency per environment
-   - Success rate by pipeline
-   - Average deployment duration
-
-3. **State File Hygiene:**
-   - Verify state file backups
-   - Monitor state file size growth
-   - Check for state drift regularly
-
-4. **Security Monitoring:**
-   - Audit OIDC role usage via CloudTrail
-   - Review IAM role permissions quarterly
-   - Monitor for unauthorized access attempts
 
 ### Related Monitoring Documentation
 

@@ -6,7 +6,7 @@ Production-ready Kubernetes infrastructure for AWS EKS with ArgoCD and AWS Load 
 
 - [🎯 Features](#-features)
 - [📚 Documentation](#-documentation)
-- [� Prerequisites](#-prerequisites)
+- [📋 Prerequisites](#-prerequisites)
 - [⚙️ Deployment](#️-deployment)
 - [🔌 AWS Load Balancer Controller](#-aws-load-balancer-controller)
 - [🚀 ArgoCD](#-argocd)
@@ -14,7 +14,6 @@ Production-ready Kubernetes infrastructure for AWS EKS with ArgoCD and AWS Load 
 - [🔧 Troubleshooting](#-troubleshooting)
 - [📝 Outputs](#-outputs)
 - [📊 Monitoring](#-monitoring)
-- [📚 Related Documentation](#-related-documentation)
 - [🧹 Cleanup](#-cleanup)
 - [💡 Practical Examples](#-practical-examples)
 
@@ -159,11 +158,6 @@ Removes the hostname restriction from the ArgoCD ingress, allowing access via th
 ./scripts/patch-argocd-ingress.sh
 ```
 
-**When to use:**
-- After initial deployment
-- After any Terraform apply that updates the ArgoCD ingress
-- When the ALB returns 404 errors
-
 ## 🔧 Troubleshooting
 
 ### ArgoCD Ingress Returns 404
@@ -241,10 +235,10 @@ kubectl port-forward svc/argocd-metrics -n argocd 8082:8082
 **AWS Load Balancer Controller Monitoring:**
 ```bash
 # Check controller pods
-kubectl get pods -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
+kubectl get pods -n kube-system -l app.kubernetes.io/name=controller
 
 # View controller logs
-kubectl logs -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller --tail=100
+kubectl logs -n kube-system -l app.kubernetes.io/name=controller --tail=100
 
 # Monitor ALB creation
 kubectl get ingress --all-namespaces -w

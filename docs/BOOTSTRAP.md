@@ -8,9 +8,8 @@ This document provides instructions for bootstrapping a Terraform remote state b
 - [📚 Usage](#-usage)
 - [🏗️ What the Script Creates](#️-what-the-script-creates)
 - [📁 State File Structure](#-state-file-structure)
-- [🦶 Next Steps](#-next-steps)
-- [🏋️ Example Backend Configurations](#️-example-backend-configurations)
-- [😵‍💫 Troubleshooting](#-troubleshooting)
+- [📝 Example Backend Configurations](#-example-backend-configurations)
+- [🔧 Troubleshooting](#-troubleshooting)
 
 ## 📋 Prerequisites
 
@@ -80,58 +79,6 @@ s3://terraform-state-bucket/
 - ✅ **Independent Deployments**: Update ArgoCD without touching EKS
 - ✅ **Granular Rollback**: Revert only the layer that failed
 - ✅ **Reduced Blast Radius**: Changes are isolated to their layer
-
-## 📝 Next Steps
-
-After running the bootstrap script:
-
-### 1. Configure Infrastructure Layer Backend
-
-Create `environments/<env>/tfbackend.hcl` in the **root directory**:
-
-```hcl
-bucket       = "terraform-state-123456789012"
-key          = "production/infra/terraform.tfstate"
-region       = "us-east-1"
-use_lockfile = true
-encrypt      = true
-```
-
-Then initialize:
-
-```bash
-terraform init -backend-config=environments/production/tfbackend.hcl
-```
-
-### 2. Configure Kubernetes Layer Backend
-
-Create `kubernetes/environments/<env>/tfbackend.hcl`:
-
-```hcl
-bucket       = "terraform-state-123456789012"
-key          = "production/kubernetes/terraform.tfstate"
-region       = "us-east-1"
-use_lockfile = true
-encrypt      = true
-```
-
-Then initialize:
-
-```bash
-cd kubernetes
-terraform init -backend-config=environments/production/tfbackend.hcl
-```
-
-### 3. Apply Infrastructure First
-
-```bash
-# Infrastructure must be deployed first
-terraform apply -var-file=environments/production/terraform.tfvars
-
-# Then Kubernetes resources
-cd kubernetes
-terraform apply -var-file=environments/production/terraform.tfvars
-```
 
 ## 📝 Example Backend Configurations
 

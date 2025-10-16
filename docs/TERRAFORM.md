@@ -5,15 +5,14 @@ Comprehensive Terraform module reference and configuration guide for the Cloud S
 ## 📑 Table of Contents <!-- omit in toc -->
 
 - [🏗️ Overview](#️-overview)
-- [� Infrastructure Layer (Root Module)](#-infrastructure-layer-root-module)
+- [🔧 Infrastructure Layer (Root Module)](#-infrastructure-layer-root-module)
 - [☸️ Kubernetes Layer](#️-kubernetes-layer)
 - [📦 Module Reference](#-module-reference)
 - [⚙️ Configuration](#️-configuration)
 - [🚀 Usage](#-usage)
 - [✨ Best Practices](#-best-practices)
 - [💡 Practical Examples](#-practical-examples)
-- [📚 Related Documentation](#-related-documentation)
-- [🔗 External Resources](#-external-resources)
+- [External Resources](#external-resources)
 
 ## 🏗️ Overview
 
@@ -330,16 +329,6 @@ terraform state mv aws_vpc.old aws_vpc.new
 
 # Remove resource from state
 terraform state rm aws_vpc.main
-```
-
-### 10. Workspace Usage
-
-For environment separation (alternative to separate directories):
-
-```bash
-terraform workspace new staging
-terraform workspace select staging
-terraform workspace list
 ```
 
 ## 💡 Practical Examples

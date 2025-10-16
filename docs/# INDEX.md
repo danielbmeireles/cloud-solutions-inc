@@ -197,7 +197,7 @@ terraform-docs markdown table --output-file TERRAFORM_KUBERNETES.md --output-mod
 
 Each documentation file should include:
 
-1. **Title with emoji** and `<!-- omit in toc -->` comment
+1. **Title with emoji** and `<!-- omit in toc -->` comment when necessary
 2. **Brief description** of what the document covers
 3. **Table of Contents** with proper links
 4. **Main content sections** with appropriate emojis

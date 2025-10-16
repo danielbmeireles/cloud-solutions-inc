@@ -112,7 +112,7 @@ You can also grant access via the AWS Console:
 
 - **SSO roles cannot be managed in Terraform** directly due to their session-based nature
 - Each SSO user who needs cluster access must have their session role added
-- For production environments, consider using **IAM roles** that SSO users can assume, rather than SSO session roles directly
+- Alternatively, consider using **IAM roles** that SSO users can assume, rather than SSO session roles directly
 - The access entry only needs to be created once per IAM principal
 
 ### Using IRSA (IAM Roles for Service Accounts)
@@ -172,13 +172,13 @@ Kubernetes Layer (kubernetes-deploy)
 **Verify Installation**:
 ```bash
 # Check if the controller is running
-kubectl get deployment -n kube-system aws-load-balancer-controller-controller
+kubectl get deployment -n kube-system aws-load-balancer-controller
 
 # Check ServiceAccount
 kubectl get sa -n kube-system aws-load-balancer-controller -o yaml
 
 # Check controller logs
-kubectl logs -n kube-system -l app.kubernetes.io/name=aws-load-balancer-controller
+kubectl logs -n kube-system -l app.kubernetes.io/name=controller
 ```
 
 **Configuration**:
@@ -196,36 +196,6 @@ aws_load_balancer_controller_chart_version = "1.14.0"
 **For more details**, see:
 - [Custom Helm Chart README](../kubernetes/charts/aws-load-balancer-controller/README.md)
 - [Kubernetes Layer README](../kubernetes/README.md)
-
-### 🚀 Deploy Sample Application with ALB
-
-Deploy the sample NGINX application with an Application Load Balancer:
-
-```bash
-# Deploy the unified manifest (includes namespace, deployment, service, and ingress)
-kubectl apply -f manifests/complete-deployment.yaml
-
-# Watch for ALB to be provisioned (takes 2-3 minutes)
-kubectl get ingress -n sample-app nginx-ingress -w
-
-# Get the ALB DNS name
-kubectl get ingress -n sample-app nginx-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}'
-```
-
-For detailed instructions, see `manifests/instructions.txt`.
-
-### Access Your Application
-
-Once the Ingress shows an ADDRESS, you can access your application:
-
-```bash
-# Get the URL
-ALB_URL=$(kubectl get ingress -n sample-app nginx-ingress -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-echo "Application URL: http://${ALB_URL}"
-
-# Test it
-curl http://${ALB_URL}
-```
 
 ### Exposing Your Own Applications
 
@@ -306,6 +276,8 @@ Access the dashboard via AWS Console or CLI:
 aws cloudwatch get-dashboard --dashboard-name cloud-solutions-production-dashboard
 ```
 
+You can also use the `Automatic Cross-Service Dashboard` - This is a built-in dashboard accessible through the CloudWatch console by selecting the dropdown menu and choosing "Cross service dashboard," which displays key metrics from all AWS services you're using in one place.
+
 ### View Logs
 
 ```bash
@@ -332,15 +304,6 @@ To enable automatic pod-based scaling, install the Cluster Autoscaler:
 
 ```bash
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
-```
-
-### Deploy Sample Application (Optional)
-
-```bash
-# Create a simple nginx deployment
-kubectl create deployment nginx --image=nginx:latest
-kubectl expose deployment nginx --port=80 --type=LoadBalancer
-kubectl get services
 ```
 
 ## 🧹 Cleanup
