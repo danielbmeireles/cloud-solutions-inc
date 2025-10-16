@@ -117,3 +117,27 @@ variable "server_resources" {
     }
   }
 }
+
+variable "server_replicas" {
+  description = "Number of replicas for ArgoCD server"
+  type        = number
+  default     = 2
+}
+
+variable "repo_server_replicas" {
+  description = "Number of replicas for ArgoCD repo server"
+  type        = number
+  default     = 2
+}
+
+variable "controller_replicas" {
+  description = "Number of replicas for ArgoCD application controller"
+  type        = number
+  default     = 1
+}
+
+variable "enable_ha" {
+  description = "Enable high availability features (pod anti-affinity and disruption budgets)"
+  type        = bool
+  default     = true
+}

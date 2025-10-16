@@ -29,16 +29,78 @@ resource "helm_release" "argocd" {
         }
       }
 
-      # Resource limits
+      # Application Controller Configuration
       controller = {
+        replicas  = var.controller_replicas
         resources = var.controller_resources
+
+        # Pod anti-affinity for HA
+        affinity = var.enable_ha ? {
+          podAntiAffinity = {
+            preferredDuringSchedulingIgnoredDuringExecution = [
+              {
+                weight = 100
+                podAffinityTerm = {
+                  labelSelector = {
+                    matchLabels = {
+                      "app.kubernetes.io/name" = "argocd-application-controller"
+                    }
+                  }
+                  topologyKey = "kubernetes.io/hostname"
+                }
+              }
+            ]
+          }
+        } : {}
+
+        # Pod disruption budget
+        pdb = var.enable_ha ? {
+          enabled      = true
+          minAvailable = 1
+          } : {
+          enabled      = false
+          minAvailable = 1
+        }
       }
 
+      # Repo Server Configuration
       repoServer = {
+        replicas  = var.repo_server_replicas
         resources = var.repo_server_resources
+
+        # Pod anti-affinity for HA
+        affinity = var.enable_ha ? {
+          podAntiAffinity = {
+            preferredDuringSchedulingIgnoredDuringExecution = [
+              {
+                weight = 100
+                podAffinityTerm = {
+                  labelSelector = {
+                    matchLabels = {
+                      "app.kubernetes.io/name" = "argocd-repo-server"
+                    }
+                  }
+                  topologyKey = "kubernetes.io/hostname"
+                }
+              }
+            ]
+          }
+        } : {}
+
+        # Pod disruption budget
+        pdb = var.enable_ha ? {
+          enabled      = true
+          minAvailable = 1
+          } : {
+          enabled      = false
+          minAvailable = 1
+        }
       }
 
+      # Server Configuration
       server = {
+        replicas = var.server_replicas
+
         service = {
           type = var.server_service_type
         }
@@ -50,6 +112,34 @@ resource "helm_release" "argocd" {
         }
 
         resources = var.server_resources
+
+        # Pod anti-affinity for HA
+        affinity = var.enable_ha ? {
+          podAntiAffinity = {
+            preferredDuringSchedulingIgnoredDuringExecution = [
+              {
+                weight = 100
+                podAffinityTerm = {
+                  labelSelector = {
+                    matchLabels = {
+                      "app.kubernetes.io/name" = "argocd-server"
+                    }
+                  }
+                  topologyKey = "kubernetes.io/hostname"
+                }
+              }
+            ]
+          }
+        } : {}
+
+        # Pod disruption budget
+        pdb = var.enable_ha ? {
+          enabled      = true
+          minAvailable = 1
+          } : {
+          enabled      = false
+          minAvailable = 1
+        }
       }
     })
   ]
