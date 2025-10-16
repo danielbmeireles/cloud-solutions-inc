@@ -81,6 +81,31 @@ variable "argocd_ingress_annotations" {
   }
 }
 
+# ArgoCD High Availability Configuration
+variable "argocd_server_replicas" {
+  description = "Number of replicas for ArgoCD server"
+  type        = number
+  default     = 2
+}
+
+variable "argocd_repo_server_replicas" {
+  description = "Number of replicas for ArgoCD repo server"
+  type        = number
+  default     = 2
+}
+
+variable "argocd_controller_replicas" {
+  description = "Number of replicas for ArgoCD application controller"
+  type        = number
+  default     = 1
+}
+
+variable "argocd_enable_ha" {
+  description = "Enable high availability features (pod anti-affinity and disruption budgets)"
+  type        = bool
+  default     = true
+}
+
 # ============================================================================
 # ACM Certificate Configuration
 # ============================================================================

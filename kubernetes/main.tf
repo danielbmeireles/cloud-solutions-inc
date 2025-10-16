@@ -135,6 +135,12 @@ module "argocd" {
     }
   ) : var.argocd_ingress_annotations
 
+  # High Availability Configuration
+  server_replicas      = var.argocd_server_replicas
+  repo_server_replicas = var.argocd_repo_server_replicas
+  controller_replicas  = var.argocd_controller_replicas
+  enable_ha            = var.argocd_enable_ha
+
   depends_on = [
     helm_release.aws_load_balancer_controller,
     module.acm_certificate
