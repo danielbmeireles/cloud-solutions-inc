@@ -21,12 +21,11 @@ argocd_server_insecure     = true # Keep insecure at pod level (TLS terminates a
 argocd_server_service_type = "ClusterIP"
 
 # High Availability Configuration
-# Currently set to 1 replica per component to match existing deployment
-# Increase these values to enable true HA (recommended: server=2, repo_server=2, controller=1)
-argocd_server_replicas      = 1
-argocd_repo_server_replicas = 1
-argocd_controller_replicas  = 1
-argocd_enable_ha            = false # Set to true when scaling to multiple replicas
+# Enabled HA mode with multiple replicas for redundancy and zero-downtime operations
+argocd_server_replicas      = 2
+argocd_repo_server_replicas = 2
+argocd_controller_replicas  = 1 # Keep at 1 (only one controller can be active at a time)
+argocd_enable_ha            = true
 
 # Ingress configuration with SSL/TLS via AWS Certificate Manager (ACM)
 argocd_ingress_enabled    = true

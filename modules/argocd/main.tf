@@ -53,13 +53,13 @@ resource "helm_release" "argocd" {
           }
         } : {}
 
-        # Pod disruption budget
-        pdb = var.enable_ha ? {
-          enabled      = true
-          minAvailable = 1
+        # Pod disruption budget - only enable if HA is enabled AND we have multiple replicas
+        pdb = var.enable_ha && var.controller_replicas > 1 ? {
+          enabled        = true
+          minAvailable   = 1
+          maxUnavailable = null
           } : {
-          enabled      = false
-          minAvailable = 1
+          enabled = false
         }
       }
 
@@ -87,13 +87,13 @@ resource "helm_release" "argocd" {
           }
         } : {}
 
-        # Pod disruption budget
-        pdb = var.enable_ha ? {
-          enabled      = true
-          minAvailable = 1
+        # Pod disruption budget - only enable if HA is enabled AND we have multiple replicas
+        pdb = var.enable_ha && var.repo_server_replicas > 1 ? {
+          enabled        = true
+          minAvailable   = 1
+          maxUnavailable = null
           } : {
-          enabled      = false
-          minAvailable = 1
+          enabled = false
         }
       }
 
@@ -132,13 +132,13 @@ resource "helm_release" "argocd" {
           }
         } : {}
 
-        # Pod disruption budget
-        pdb = var.enable_ha ? {
-          enabled      = true
-          minAvailable = 1
+        # Pod disruption budget - only enable if HA is enabled AND we have multiple replicas
+        pdb = var.enable_ha && var.server_replicas > 1 ? {
+          enabled        = true
+          minAvailable   = 1
+          maxUnavailable = null
           } : {
-          enabled      = false
-          minAvailable = 1
+          enabled = false
         }
       }
     })
