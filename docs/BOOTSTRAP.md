@@ -54,23 +54,22 @@ export AWS_REGION="eu-west-1"
 
 This project uses a **two-layer architecture** with separate state files:
 
-```
-s3://terraform-state-bucket/
-├── production/
-│   ├── infra/
-│   │   └── terraform.tfstate          # Infrastructure layer
-│   └── kubernetes/
-│       └── terraform.tfstate          # Kubernetes layer
-├── staging/
-│   ├── infra/
-│   │   └── terraform.tfstate
-│   └── kubernetes/
-│       └── terraform.tfstate
-└── development/
-    ├── infra/
-    │   └── terraform.tfstate
-    └── kubernetes/
-        └── terraform.tfstate
+```mermaid
+graph TD
+    S3["s3://terraform-state-bucket/"]
+
+    S3 --> Prod["production/"]
+    S3 --> Stg["staging/"]
+    S3 --> Dev["development/"]
+
+    Prod --> ProdInfra["infra/<br/>terraform.tfstate<br/>(Infrastructure layer)"]
+    Prod --> ProdK8s["kubernetes/<br/>terraform.tfstate<br/>(Kubernetes layer)"]
+
+    Stg --> StgInfra["infra/<br/>terraform.tfstate"]
+    Stg --> StgK8s["kubernetes/<br/>terraform.tfstate"]
+
+    Dev --> DevInfra["infra/<br/>terraform.tfstate"]
+    Dev --> DevK8s["kubernetes/<br/>terraform.tfstate"]
 ```
 
 **Why Two Separate States?**
