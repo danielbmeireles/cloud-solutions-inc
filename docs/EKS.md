@@ -158,15 +158,25 @@ EKS applications can be exposed to the internet using the AWS Load Balancer Cont
 The AWS Load Balancer Controller is automatically installed by the `kubernetes-deploy` pipeline. It uses a custom Helm chart wrapper for better maintainability.
 
 **Architecture**:
-```
-Infrastructure Layer (terraform-deploy)
-└─ OIDC Provider for IRSA
 
-Kubernetes Layer (kubernetes-deploy)
-├─ IAM Role (IRSA) ← Created by Terraform
-└─ Custom Helm Chart
-   ├─ ServiceAccount ← Managed by Helm template
-   └─ AWS LB Controller ← Official chart as dependency
+```mermaid
+flowchart TB
+    subgraph IL["Infrastructure Layer (terraform-deploy)"]
+        OIDC["OIDC Provider for IRSA"]
+    end
+
+    subgraph KL["Kubernetes Layer (kubernetes-deploy)"]
+        IAM["IAM Role (IRSA)<br/>Created by Terraform"]
+
+        subgraph HC["Custom Helm Chart"]
+            SA["ServiceAccount<br/>Managed by Helm template"]
+            LBC["AWS LB Controller<br/>Official chart as dependency"]
+        end
+    end
+
+    OIDC -.-> IAM
+    IAM --> SA
+    SA --> LBC
 ```
 
 **Verify Installation**:

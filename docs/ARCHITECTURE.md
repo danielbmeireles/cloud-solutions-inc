@@ -14,34 +14,33 @@ This document describes the architecture and design decisions for the Cloud Solu
 
 This infrastructure implements a **two-pipeline, two-state architecture** that separates infrastructure provisioning from Kubernetes resource management:
 
-```
-┌─────────────────────────────────────────────┐
-│  Pipeline 1: terraform-deploy               │
-│  Infrastructure Layer                       │
-│  ├─ VPC, Subnets, NAT Gateways              │
-│  ├─ EKS Cluster & Node Groups               │
-│  ├─ IAM Roles (Cluster & Nodes)             │
-│  ├─ KMS Keys                                │
-│  ├─ EFS File System                         │
-│  ├─ CloudWatch Dashboards                   │
-│  └─ OIDC Provider                           │
-│  State: {env}/infra/terraform.tfstate       │
-└──────────────────┬──────────────────────────┘
-                   │
-                   │ Triggers on success
-                   │ Consumes outputs via remote state
-                   ▼
-┌─────────────────────────────────────────────┐
-│  Pipeline 2: kubernetes-deploy              │
-│  Kubernetes Resources Layer                 │
-│  ├─ IAM Roles (IRSA for K8s)                │
-│  ├─ AWS Load Balancer Controller            │
-│  │  └─ Custom Helm Chart Wrapper            |
-|  |- ACM (SSL/TLS Certificate)               │
-│  ├─ ArgoCD                                  │
-│  └─ Other K8s Resources                     │
-│  State: {env}/kubernetes/terraform.tfstate  │
-└─────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph P1["Pipeline 1: terraform-deploy<br/>Infrastructure Layer"]
+        direction TB
+        I1["VPC, Subnets, NAT Gateways"]
+        I2["EKS Cluster & Node Groups"]
+        I3["IAM Roles (Cluster & Nodes)"]
+        I4["KMS Keys"]
+        I5["EFS File System"]
+        I6["CloudWatch Dashboards"]
+        I7["OIDC Provider"]
+        I8["State: {env}/infra/terraform.tfstate"]
+        I1 --> I2 --> I3 --> I4 --> I5 --> I6 --> I7 --> I8
+    end
+
+    subgraph P2["Pipeline 2: kubernetes-deploy<br/>Kubernetes Resources Layer"]
+        direction TB
+        K1["IAM Roles (IRSA for K8s)"]
+        K2["AWS Load Balancer Controller<br/>(Custom Helm Chart Wrapper)"]
+        K3["ACM (SSL/TLS Certificate)"]
+        K4["ArgoCD"]
+        K5["Other K8s Resources"]
+        K6["State: {env}/kubernetes/terraform.tfstate"]
+        K1 --> K2 --> K3 --> K4 --> K5 --> K6
+    end
+
+    P1 -->|Triggers on success<br/>Consumes outputs via remote state| P2
 ```
 
 ### Deployment Flow
@@ -62,23 +61,22 @@ This infrastructure implements a **two-pipeline, two-state architecture** that s
 
 States are completely separated by layer:
 
-```
-s3://terraform-state-bucket/
-├── production/
-│   ├── infra/
-│   │   └── terraform.tfstate       # Infrastructure layer
-│   └── kubernetes/
-│       └── terraform.tfstate       # Kubernetes layer
-├── staging/
-│   ├── infra/
-│   │   └── terraform.tfstate
-│   └── kubernetes/
-│       └── terraform.tfstate
-└── development/
-    ├── infra/
-    │   └── terraform.tfstate
-    └── kubernetes/
-        └── terraform.tfstate
+```mermaid
+graph TD
+    S3["s3://terraform-state-bucket/"]
+
+    S3 --> Prod["production/"]
+    S3 --> Stg["staging/"]
+    S3 --> Dev["development/"]
+
+    Prod --> ProdInfra["infra/<br/>terraform.tfstate<br/>(Infrastructure layer)"]
+    Prod --> ProdK8s["kubernetes/<br/>terraform.tfstate<br/>(Kubernetes layer)"]
+
+    Stg --> StgInfra["infra/<br/>terraform.tfstate"]
+    Stg --> StgK8s["kubernetes/<br/>terraform.tfstate"]
+
+    Dev --> DevInfra["infra/<br/>terraform.tfstate"]
+    Dev --> DevK8s["kubernetes/<br/>terraform.tfstate"]
 ```
 
 **Benefits of This Architecture:**

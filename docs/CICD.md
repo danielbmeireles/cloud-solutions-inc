@@ -24,25 +24,26 @@ The GitHub Actions workflows provide:
 
 The deployment is split into **two separate pipelines** for better separation of concerns:
 
-```
-┌────────────────────────────────-─┐
-│  Pipeline 1: terraform-deploy    │
-│  Infrastructure Layer            │
-│  - VPC, EKS, IAM                 │
-│  - KMS, EFS, ALB                 │
-│  - CloudWatch                    │
-│  State: {env}/infra/tfstate      │
-└──────────────┬──────────────────-┘
-               │
-               │ triggers on success
-               ▼
-┌─────────────────────────────────-┐
-│  Pipeline 2: kubernetes-deploy   │
-│  Kubernetes Resources Layer      │
-│  - AWS Load Balancer Controller  │
-│  - ArgoCD                        │
-│  State: {env}/kubernetes/tfstate │
-└─────────────────────────────────-┘
+```mermaid
+flowchart TB
+    subgraph P1["Pipeline 1: terraform-deploy<br/>Infrastructure Layer"]
+        direction TB
+        I1["VPC, EKS, IAM"]
+        I2["KMS, EFS, ALB"]
+        I3["CloudWatch"]
+        I4["State: {env}/infra/tfstate"]
+        I1 --> I2 --> I3 --> I4
+    end
+
+    subgraph P2["Pipeline 2: kubernetes-deploy<br/>Kubernetes Resources Layer"]
+        direction TB
+        K1["AWS Load Balancer Controller"]
+        K2["ArgoCD"]
+        K3["State: {env}/kubernetes/tfstate"]
+        K1 --> K2 --> K3
+    end
+
+    P1 -->|triggers on success| P2
 ```
 
 **Why Two Pipelines?**
@@ -55,17 +56,22 @@ The deployment is split into **two separate pipelines** for better separation of
 
 ### State Separation
 
-```
-s3://cloud-solutions-terraform-state/
-├── production/
-│   ├── infra/terraform.tfstate       # Pipeline 1
-│   └── kubernetes/terraform.tfstate  # Pipeline 2
-├── staging/
-│   ├── infra/terraform.tfstate
-│   └── kubernetes/terraform.tfstate
-└── development/
-    ├── infra/terraform.tfstate
-    └── kubernetes/terraform.tfstate
+```mermaid
+graph TD
+    S3["s3://cloud-solutions-terraform-state/"]
+
+    S3 --> Prod["production/"]
+    S3 --> Stg["staging/"]
+    S3 --> Dev["development/"]
+
+    Prod --> ProdInfra["infra/terraform.tfstate<br/>(Pipeline 1)"]
+    Prod --> ProdK8s["kubernetes/terraform.tfstate<br/>(Pipeline 2)"]
+
+    Stg --> StgInfra["infra/terraform.tfstate"]
+    Stg --> StgK8s["kubernetes/terraform.tfstate"]
+
+    Dev --> DevInfra["infra/terraform.tfstate"]
+    Dev --> DevK8s["kubernetes/terraform.tfstate"]
 ```
 
 ## 📄 Workflow Files

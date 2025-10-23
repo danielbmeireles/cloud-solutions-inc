@@ -31,16 +31,20 @@ This deployment provides ArgoCD as a GitOps continuous delivery platform for Kub
 
 ### Basic HTTP Setup
 
-```
-User → AWS ALB (HTTP) → ArgoCD Server (ClusterIP)
+```mermaid
+flowchart LR
+    User --> ALB["AWS ALB (HTTP)"]
+    ALB --> ArgoCD["ArgoCD Server (ClusterIP)"]
 ```
 
 ### Custom Domain with SSL/TLS
 
-```
-User (HTTPS) → DNS Provider (CNAME) → AWS ALB (SSL Termination) → ArgoCD Server (HTTP)
-                                          ↑
-                                   ACM Certificate
+```mermaid
+flowchart LR
+    User["User (HTTPS)"] --> DNS["DNS Provider (CNAME)"]
+    DNS --> ALB["AWS ALB (SSL Termination)"]
+    ALB --> ArgoCD["ArgoCD Server (HTTP)"]
+    ACM["ACM Certificate"] -.-> ALB
 ```
 
 **Components:**
