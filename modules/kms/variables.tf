@@ -21,4 +21,5 @@ variable "deletion_window_in_days" {
 variable "node_group_arn" {
   description = "ARN of the EKS Node Group Role"
   type        = string
+  default     = ""
 }
