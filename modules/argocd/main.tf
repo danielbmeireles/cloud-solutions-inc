@@ -59,7 +59,9 @@ resource "helm_release" "argocd" {
           minAvailable   = 1
           maxUnavailable = null
           } : {
-          enabled = false
+          enabled        = false
+          minAvailable   = null
+          maxUnavailable = null
         }
       }
 
@@ -93,7 +95,9 @@ resource "helm_release" "argocd" {
           minAvailable   = 1
           maxUnavailable = null
           } : {
-          enabled = false
+          enabled        = false
+          minAvailable   = null
+          maxUnavailable = null
         }
       }
 
@@ -138,7 +142,9 @@ resource "helm_release" "argocd" {
           minAvailable   = 1
           maxUnavailable = null
           } : {
-          enabled = false
+          enabled        = false
+          minAvailable   = null
+          maxUnavailable = null
         }
       }
     })
