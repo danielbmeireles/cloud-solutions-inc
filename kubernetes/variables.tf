@@ -106,9 +106,7 @@ variable "argocd_enable_ha" {
   default     = true
 }
 
-# ============================================================================
 # ACM Certificate Configuration
-# ============================================================================
 
 variable "acm_certificate_enabled" {
   description = "Enable ACM certificate creation via Terraform for ArgoCD domain"

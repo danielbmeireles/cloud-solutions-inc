@@ -19,9 +19,7 @@ output "aws_load_balancer_controller_role_arn" {
   sensitive   = true
 }
 
-# ============================================================================
 # ACM Certificate Outputs
-# ============================================================================
 
 output "acm_certificate_arn" {
   description = "ARN of the ACM certificate for ArgoCD (if enabled)"

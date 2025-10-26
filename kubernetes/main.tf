@@ -93,9 +93,7 @@ resource "helm_release" "aws_load_balancer_controller" {
   ]
 }
 
-# ============================================================================
 # ACM Certificate for ArgoCD (if enabled)
-# ============================================================================
 
 module "acm_certificate" {
   source = "../modules/acm"
@@ -113,9 +111,7 @@ module "acm_certificate" {
   }
 }
 
-# ============================================================================
 # ArgoCD Module
-# ============================================================================
 
 module "argocd" {
   source = "../modules/argocd"
