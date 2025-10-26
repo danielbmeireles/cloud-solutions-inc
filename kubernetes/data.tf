@@ -1,6 +1,4 @@
-# ============================================================================
 # Data Sources
-# ============================================================================
 
 # Data source to get infrastructure state from remote backend
 data "terraform_remote_state" "infra" {
