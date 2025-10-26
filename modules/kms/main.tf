@@ -4,9 +4,21 @@ resource "aws_kms_key" "eks" {
   deletion_window_in_days = var.deletion_window_in_days
   enable_key_rotation     = true
 
+  tags = {
+    Name        = "${var.project_name}-${var.environment}-eks-key"
+    Purpose     = "EKS Secrets Encryption"
+    Environment = var.environment
+    Project     = var.project_name
+  }
+}
+
+# Separate policy resource to avoid circular dependency
+resource "aws_kms_key_policy" "eks" {
+  key_id = aws_kms_key.eks.id
+
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
+    Statement = concat([
       {
         Sid    = "Enable IAM policies"
         Effect = "Allow"
@@ -45,8 +57,9 @@ resource "aws_kms_key" "eks" {
             "kms:GrantIsForAWSResource" = "true"
           }
         }
-      },
-      {
+      }
+      ],
+      var.node_group_arn != "" ? [{
         Sid    = "Allow Node Group Role"
         Effect = "Allow"
         Principal = {
@@ -57,16 +70,9 @@ resource "aws_kms_key" "eks" {
           "kms:DescribeKey"
         ]
         Resource = "*"
-      }
-    ]
+      }] : []
+    )
   })
-
-  tags = {
-    Name        = "${var.project_name}-${var.environment}-eks-key"
-    Purpose     = "EKS Secrets Encryption"
-    Environment = var.environment
-    Project     = var.project_name
-  }
 }
 
 resource "aws_kms_alias" "eks" {
@@ -80,9 +86,21 @@ resource "aws_kms_key" "ebs" {
   deletion_window_in_days = var.deletion_window_in_days
   enable_key_rotation     = true
 
+  tags = {
+    Name        = "${var.project_name}-${var.environment}-ebs-key"
+    Purpose     = "EBS Volume Encryption"
+    Environment = var.environment
+    Project     = var.project_name
+  }
+}
+
+# Separate policy resource to avoid circular dependency
+resource "aws_kms_key_policy" "ebs" {
+  key_id = aws_kms_key.ebs.id
+
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
+    Statement = concat([
       {
         Sid    = "Enable IAM policies"
         Effect = "Allow"
@@ -121,20 +139,6 @@ resource "aws_kms_key" "ebs" {
             "kms:GrantIsForAWSResource" = "true"
           }
         }
-      },
-      {
-        Sid    = "Allow Node Group Role"
-        Effect = "Allow"
-        Principal = {
-          AWS = var.node_group_arn
-        }
-        Action = [
-          "kms:Decrypt",
-          "kms:DescribeKey",
-          "kms:GenerateDataKey",
-          "kms:CreateGrant"
-        ]
-        Resource = "*"
       },
       {
         Sid    = "Allow EC2 Service"
@@ -155,15 +159,23 @@ resource "aws_kms_key" "ebs" {
           }
         }
       }
-    ]
+      ],
+      var.node_group_arn != "" ? [{
+        Sid    = "Allow Node Group Role"
+        Effect = "Allow"
+        Principal = {
+          AWS = var.node_group_arn
+        }
+        Action = [
+          "kms:Decrypt",
+          "kms:DescribeKey",
+          "kms:GenerateDataKey",
+          "kms:CreateGrant"
+        ]
+        Resource = "*"
+      }] : []
+    )
   })
-
-  tags = {
-    Name        = "${var.project_name}-${var.environment}-ebs-key"
-    Purpose     = "EBS Volume Encryption"
-    Environment = var.environment
-    Project     = var.project_name
-  }
 }
 
 resource "aws_kms_alias" "ebs" {
